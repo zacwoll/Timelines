@@ -4,7 +4,7 @@ import { Users } from './mock-users';
 
 
 const Nelly = Users[0];
-export const Stories: Story[] = [
+export const STORIES: Story[] = [
     {
         id: 1,
         user: Nelly,

@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Story } from '../story';
-import { Stories } from '../mock-stories';
+import { TimelineService } from '../timeline.service';
 
 @Component({
   selector: 'app-timeline',
@@ -8,13 +8,16 @@ import { Stories } from '../mock-stories';
   styleUrls: ['./timeline.component.sass']
 })
 export class TimelineComponent implements OnInit {
-  stories: Story[] = Stories;
+  stories: Story[] = [];
+
+  constructor(private timelineService: TimelineService) { }
 
   ngOnInit(): void {
     this.getTimeline();
   }
 
   getTimeline(): void {
-    
+    this.timelineService.getTimeline()
+      .subscribe(stories => this.stories = stories);
   }
 }
