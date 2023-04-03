@@ -1,0 +1,9 @@
+<section class="timeline">
+    <div *ngFor="let story of stories">
+        <div class="story">
+            <div class="user">{{story.user.username}}</div>
+            <div class="date">{{story.date}}</div>
+            <div class="content">{{story.content}}</div>
+        </div>
+    </div>
+</section>
