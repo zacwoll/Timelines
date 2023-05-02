@@ -1,0 +1,49 @@
+version: "3"
+
+services:
+  database:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: yourusername
+      POSTGRES_PASSWORD: yourpassword
+      POSTGRES_DB: yourdatabasename
+
+  hasura:
+    image: hasura/graphql-engine:v2.0.9
+    depends_on:
+      - database
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      HASURA_GRAPHQL_DATABASE_URL: postgres://yourusername:yourpassword@database:5432/yourdatabasename
+
+  node:
+    build: ./DiscordClient
+    depends_on:
+      - hasura
+      - express
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgres://yourusername:yourpassword@database:5432/yourdatabasename
+      HASURA_GRAPHQL_ENDPOINT: http://hasura:8080/v1/graphql
+      HASURA_GRAPHQL_ADMIN_SECRET: yourhasurasecret
+
+  express:
+    build: ./Backend
+    depends_on:
+      - database
+    restart: always
+    ports:
+      - "4000:4000"
+    environment:
+      DATABASE_URL: postgres://yourusername:yourpassword@database:5432/yourdatabasename
+
+  # frontend:
+  #   build: ./frontend
+  #   restart: always
+  #   ports:
+  #     - "80:80"

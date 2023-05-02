@@ -1,49 +1,57 @@
-version: "3"
+version: '3'
 
 services:
-  database:
-    image: postgres
-    restart: always
+  rabbitmq:
+    # Specifies the RabbitMQ image to use, along with its version and the addition of the RabbitMQ management plugin
+    image: rabbitmq:3.9.5-management-alpine
     environment:
-      POSTGRES_USER: yourusername
-      POSTGRES_PASSWORD: yourpassword
-      POSTGRES_DB: yourdatabasename
+      # Specifies the IP addresses that are allowed to connect to the RabbitMQ instance
+      - RABBITMQ_ALLOW_IPS=${RABBITMQ_ALLOW_IPS}
+      # Specifies the IP address that the RabbitMQ management plugin should listen on
+      - RABBITMQ_MANAGEMENT_LISTEN_ADDR=${RABBITMQ_MANAGEMENT_LISTEN_ADDR}
+      # Specifies the default RabbitMQ username and password
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+    ports:
+      # Maps the container's 5672 port (default AMQP port) to the host machine's 5672 port
+      - "5672:5672"
+      # Maps the container's 15672 port (RabbitMQ management UI port) to the host machine's 15672 port
+      - "15672:15672" 
+    networks:
+      # Specifies the network that the RabbitMQ container will be connected to
+      - timelines-net  
+    restart: always     
+    # Ensures that the RabbitMQ container restarts automatically if it crashes or if the Docker daemon is restarted
 
-  hasura:
-    image: hasura/graphql-engine:v2.0.9
+  # This is the entry point of the application
+  gateway:
+    # The 'build' command specifies the path to the directory that contains the Dockerfile for the gateway service
+    build: 
+      context: ./gateway
+      dockerfile: Dockerfile
+    # The 'depends_on' command specifies that the rabbitmq service must be started before the gateway service
     depends_on:
-      - database
-    restart: always
+      - rabbitmq
+    
+    # The 'environment' command sets environment variables for the gateway service
+    environment:
+      - RABBITMQ_HOST=${RABBITMQ_HOST}     # Specifies the hostname of the RabbitMQ service
+      - RABBITMQ_PORT=${RABBITMQ_PORT}     # Specifies the port number for the RabbitMQ service
+      - RABBITMQ_QUEUE=${RABBITMQ_QUEUE}   # Specifies the name of the RabbitMQ queue to use
+      - RABBITMQ_EXCHANGE=${RABBITMQ_EXCHANGE} # Specifies the name of the RabbitMQ exchange to use
+      
+    # The 'ports' command maps port 8080 on the host to port 8080 in the container
     ports:
       - "8080:8080"
-    environment:
-      HASURA_GRAPHQL_DATABASE_URL: postgres://yourusername:yourpassword@database:5432/yourdatabasename
+    
+    # The 'networks' command specifies the network(s) to which the gateway service should be connected
+    networks:
+      - timelines-net
 
-  node:
-    build: ./DiscordClient
-    depends_on:
-      - hasura
-      - express
-    restart: always
-    ports:
-      - "3000:3000"
-    environment:
-      DATABASE_URL: postgres://yourusername:yourpassword@database:5432/yourdatabasename
-      HASURA_GRAPHQL_ENDPOINT: http://hasura:8080/v1/graphql
-      HASURA_GRAPHQL_ADMIN_SECRET: yourhasurasecret
-
-  express:
-    build: ./Backend
-    depends_on:
-      - database
-    restart: always
-    ports:
-      - "4000:4000"
-    environment:
-      DATABASE_URL: postgres://yourusername:yourpassword@database:5432/yourdatabasename
-
-  # frontend:
-  #   build: ./frontend
-  #   restart: always
-  #   ports:
-  #     - "80:80"
+networks:
+  timelines-net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.22.0.0/16
