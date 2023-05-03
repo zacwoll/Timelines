@@ -34,8 +34,11 @@
   },
   "include": [
     ".projenrc.js",
+    "./**/*.ts",
+    "test/**/*.ts",
     "src/**/*.ts",
     "test/**/*.ts",
+    ".projenrc.ts",
     ".projenrc.ts",
     "projenrc/**/*.ts"
   ],

@@ -11,6 +11,7 @@ const project = new TypeScriptAppProject({
   defaultReleaseBranch: "main",
   name: "gateway",
   projenrcTs: true,
+  srcdir: ".",
   deps: [
     "express",
     "amqplib", // RabbitMQ library
@@ -28,13 +29,13 @@ const project = new TypeScriptAppProject({
   packageManager: NodePackageManager.NPM, // use npm as the package manager
   eslint: true,
   eslintOptions: {
-    dirs: ["src"], // Files or glob patterns or directories with source files to lint
+    dirs: [".", "src"], // Files or glob patterns or directories with source files to lint
     devdirs: ["test", "build"], // Files or glob patterns or directories with source files that include tests and build tools
     fileExtensions: [".ts"], // File types that should be linted
     ignorePatterns: ["node_modules/", "coverage"], // List of file patterns that should not be linted
     prettier: true, // Enable prettier for code formatting
     tsAlwaysTryTypes: true, // Always try to resolve types under <root>@types directory even it doesn’t contain any source code
-    tsconfigPath: "./gateway/tsconfig.json", // Path to tsconfig.json which should be used by eslint Why ./gateway???
+    tsconfigPath: "./tsconfig.json", // Path to tsconfig.json which should be used by eslint
   },
   prettierOptions: {
     settings: {
@@ -54,6 +55,7 @@ const project = new TypeScriptAppProject({
       target: "ES2019",
       module: "commonjs",
       lib: ["ESNext"],
+      rootDir: ".",
       strict: true,
       moduleResolution: TypeScriptModuleResolution.NODE,
       esModuleInterop: true,
@@ -67,6 +69,11 @@ const project = new TypeScriptAppProject({
         "*": ["src/*"],
       },
     },
+    include: [
+      "src/**/*.ts",
+      "test/**/*.ts",
+      ".projenrc.ts", // add .projenrc.ts to the include array
+    ],
   },
 });
 

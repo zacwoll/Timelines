@@ -14,7 +14,8 @@
   "parserOptions": {
     "ecmaVersion": 2018,
     "sourceType": "module",
-    "project": "./gateway/tsconfig.json"
+    "tsconfigRootDir": ".",
+    "project": "./tsconfig.json"
   },
   "extends": [
     "plugin:import/typescript",
@@ -31,7 +32,7 @@
     "import/resolver": {
       "node": {},
       "typescript": {
-        "project": "./gateway/tsconfig.json",
+        "project": "./tsconfig.json",
         "alwaysTryTypes": true
       }
     }
