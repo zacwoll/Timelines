@@ -4,6 +4,7 @@ import {
   QuoteProps,
   TrailingComma,
   TypeScriptModuleResolution,
+  Transform,
 } from "projen/lib/javascript";
 import { TypeScriptAppProject } from "projen/lib/typescript";
 
@@ -21,6 +22,8 @@ const project = new TypeScriptAppProject({
     "@types/amqplib", // TypeScript definitions for amqplib
     "@typescript-eslint/eslint-plugin", // TypeScript ESLint plugin
     "@typescript-eslint/parser", // TypeScript ESLint parser
+    "@types/supertest",
+    "supertest",
     "eslint", // ESLint
     "prettier", // Prettier
     "eslint-config-prettier", // Prettier ESLint config to avoid conflicts with ESLint
@@ -30,7 +33,7 @@ const project = new TypeScriptAppProject({
   eslint: true,
   eslintOptions: {
     dirs: [".", "src"], // Files or glob patterns or directories with source files to lint
-    devdirs: ["test", "build"], // Files or glob patterns or directories with source files that include tests and build tools
+    devdirs: ["tests", "build"], // Files or glob patterns or directories with source files that include tests and build tools
     fileExtensions: [".ts"], // File types that should be linted
     ignorePatterns: ["node_modules/", "coverage"], // List of file patterns that should not be linted
     prettier: true, // Enable prettier for code formatting
@@ -73,7 +76,21 @@ const project = new TypeScriptAppProject({
       "src/**/*.ts",
       "test/**/*.ts",
       ".projenrc.ts", // add .projenrc.ts to the include array
+      "tsconfig.json",
     ],
+  },
+  jestOptions: {
+    jestConfig: {
+      testMatch: ["<rootDir>/test/**/*.test.ts"],
+      transform: {
+        "^.+\\.tsx?$": new Transform("ts-jest", {
+          tsconfig: "./tsconfig.json",
+        }),
+      },
+      moduleNameMapper: {
+        "^@/(.*)$": "<rootDir>/src/$1",
+      },
+    },
   },
 });
 

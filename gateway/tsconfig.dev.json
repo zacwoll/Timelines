@@ -24,6 +24,7 @@
     "strictPropertyInitialization": true,
     "stripInternal": true,
     "target": "ES2019",
+    "rootDir": ".",
     "moduleResolution": "node",
     "baseUrl": ".",
     "paths": {
@@ -39,6 +40,7 @@
     "src/**/*.ts",
     "test/**/*.ts",
     ".projenrc.ts",
+    "tsconfig.json",
     ".projenrc.ts",
     "projenrc/**/*.ts"
   ],

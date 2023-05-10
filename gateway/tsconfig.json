@@ -27,12 +27,19 @@
     "stripInternal": true,
     "target": "ES2019",
     "moduleResolution": "node",
+    "baseUrl": ".",
+    "paths": {
+      "*": [
+        "src/*"
+      ]
+    }
   },
   "include": [
     "./**/*.ts",
     "src/**/*.ts",
     "test/**/*.ts",
-    ".projenrc.ts"
-, "test/server.test.ts"  ],
+    ".projenrc.ts",
+    "tsconfig.json"
+  ],
   "exclude": []
 }

@@ -1,35 +1,112 @@
-import express from "express";
+import { Server as HTTPServer } from "http";
+import express, { Express } from "express";
 
-const app = express();
-const port = 3000;
+export class Server {
+  private app: Express;
+  private port: number;
+  private server?: HTTPServer;
+  private setupComplete: Promise<void>;
+  private isReadyForConnections: boolean;
 
-app.use(express.json());
+  constructor(port: number) {
+    this.app = express();
+    this.port = port;
+    this.setupComplete = this.setup();
+    this.isReadyForConnections = false;
+    void this.start();
+  }
 
-// Endpoint for receiving authorization codes
-app.post("/webhook", (req, res) => {
-  const code = req.body.code;
-  const guildId = req.body.guildId;
+  public getServer() {
+    return this.server;
+  }
 
-  console.log(`Authorization code: ${code}`);
-  console.log(`Guild ID: ${guildId}`);
+  // Set up express routes
+  private setupRoutes() {
+    this.app.use(express.json());
 
-  // Emit an event with the login data
+    // Webhook is what we need to use when authorizing a new guild
+    this.app.post("/webhook", (req, res) => {
+      const code = req.body.code;
+      const guildId = req.body.guildId;
 
-  res.sendStatus(200);
-});
+      console.log(`Authorization code: ${code}`);
+      console.log(`Guild ID: ${guildId}`);
 
-// Endpoint for serving timeline data
-app.get("/timelines/:user", (req, res) => {
-  const user = req.params.user;
+      res.sendStatus(200);
+    });
 
-  // TODO: Fetch timeline data for the given user
-  // ...
+    // Timelines Endpoint for the user
+    this.app.get("/timelines/:user", (req, res) => {
+      const user = req.params.user;
 
-  res.send(`Timeline data for user ${user}`);
-});
+      res.send(`Timeline data for user ${user}`);
+      res.sendStatus(200);
+    });
+  }
 
-app.listen(port, () => {
-  console.log(`Example app listening at http://localhost:${port}`);
-});
+  // setup function that runs all setup necessities
+  private async setup(): Promise<void> {
+    return new Promise((resolve) => {
+      this.setupRoutes();
+      resolve();
+    });
+  }
 
-export { app };
+  // Open for connections
+  private async listen(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      try {
+        if (!this.server) {
+          this.server = this.app.listen(this.port, () => {
+            console.log(
+              `Example app listening at http://localhost:${this.port}`
+            );
+            this.isReadyForConnections = true;
+          });
+        } else {
+          console.log(`Example app resumed at http://localhost:${this.port}`);
+          this.isReadyForConnections = true;
+        }
+        resolve();
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
+  // When setup is complete, start the server
+  public async start() {
+    await this.setupComplete;
+    await this.listen();
+  }
+
+  public async pause() {
+    if (this.server) {
+      this.server.close();
+      console.log("Server paused");
+    }
+  }
+
+  public async resume() {
+    await this.setupComplete;
+    await this.listen();
+  }
+
+  public async isReady(): Promise<void> {
+    return new Promise<void>((resolve) => {
+      if (this.isReadyForConnections) {
+        console.log("Is ready!");
+        resolve();
+      } else {
+        const interval = setInterval(() => {
+          if (this.isReadyForConnections) {
+            clearInterval(interval);
+            resolve();
+          } else {
+            console.log("Not ready yet");
+          }
+        }, 100);
+      }
+    });
+  }
+}

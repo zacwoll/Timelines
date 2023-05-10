@@ -18,6 +18,10 @@
       "type": "build"
     },
     {
+      "name": "@types/supertest",
+      "type": "build"
+    },
+    {
       "name": "@typescript-eslint/eslint-plugin",
       "version": "^5",
       "type": "build"
@@ -72,6 +76,10 @@
     },
     {
       "name": "projen",
+      "type": "build"
+    },
+    {
+      "name": "supertest",
       "type": "build"
     },
     {

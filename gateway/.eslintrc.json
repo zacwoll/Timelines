@@ -14,7 +14,6 @@
   "parserOptions": {
     "ecmaVersion": 2018,
     "sourceType": "module",
-    "tsconfigRootDir": ".",
     "project": "./tsconfig.json"
   },
   "extends": [
@@ -54,7 +53,7 @@
       "error",
       {
         "devDependencies": [
-          "**/test/**",
+          "**/tests/**",
           "**/build/**",
           ".projenrc.ts",
           "projenrc/**/*.ts"
