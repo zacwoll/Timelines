@@ -12,14 +12,6 @@ describe("Server", () => {
     request = supertest(server.getServer());
   });
 
-  beforeEach(async () => {
-    await server.resume();
-  });
-
-  afterEach(async () => {
-    await server.pause();
-  });
-
   describe("setup", () => {
     it("should start the server and return a 200 status code", async () => {
       const res = await request.get("/timelines/john");

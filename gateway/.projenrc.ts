@@ -14,8 +14,9 @@ const project = new TypeScriptAppProject({
   projenrcTs: true,
   srcdir: ".",
   deps: [
-    "express",
+    "express", // Server library
     "amqplib", // RabbitMQ library
+    "dotenv", // environment variables
   ],
   devDeps: [
     "@types/express", // TypeScript definitions for Express

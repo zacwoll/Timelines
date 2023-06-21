@@ -1,5 +1,8 @@
 import { Server as HTTPServer } from "http";
+import amqp, { ConsumeMessage } from "amqplib";
+import dotenv from "dotenv";
 import express, { Express } from "express";
+dotenv.config();
 
 export class Server {
   private app: Express;
@@ -7,6 +10,8 @@ export class Server {
   private server?: HTTPServer;
   private setupComplete: Promise<void>;
   private isReadyForConnections: boolean;
+  private connection?: amqp.Connection;
+  private authChannel?: amqp.Channel;
 
   constructor(port: number) {
     this.app = express();
@@ -44,11 +49,84 @@ export class Server {
     });
   }
 
+  private async setupMessaging(): Promise<void> {
+    return new Promise(async (resolve, reject) => {
+      try {
+        // Connect to RabbitMQ
+        console.log("Setting up connection");
+        const rabbitmqHost = "localhost";
+        // const rabbitmqHost = process.env.RABBITMQ_HOST || "localhost";
+        const rabbitmqPort = process.env.RABBITMQ_PORT || 5672;
+        const rabbitmqUser = process.env.RABBITMQ_GATEWAY_USER;
+        const rabbitmqPass = process.env.RABBITMQ_GATEWAY_PASSWD;
+        const rabbitmqAuthHost = process.env.RABBITMQ_AUTH_HOST || "";
+        const connectionUrl = `amqp://${rabbitmqUser}:${rabbitmqPass}@${rabbitmqHost}:${rabbitmqPort}/${rabbitmqAuthHost}`;
+        console.log(connectionUrl);
+        this.connection = await amqp.connect(connectionUrl);
+
+        // Create the auth channel
+        console.log("Setting up auth queue");
+        const authQueueName = process.env.RABBITMQ_QUEUE || "auth_queue";
+        const authExchangeName =
+          process.env.RABBITMQ_EXCHANGE || "auth_exchange";
+        console.log("Creating auth channel");
+        const authChannel = await this.connection.createChannel();
+
+        // Assert the auth queue and exchange
+        await authChannel.assertQueue(authQueueName, {
+          durable: true,
+        });
+        await authChannel.assertExchange(authExchangeName, "direct", {
+          durable: true,
+        });
+
+        // Bind the queue to the exchange
+        await authChannel.bindQueue(authQueueName, authExchangeName, "");
+
+        // Save the auth channel
+        this.authChannel = authChannel;
+        console.log("Setup Auth Connsumer");
+        await this.setupAuthConsumer(this.authChannel);
+
+        console.log("Connected to RabbitMQ");
+        resolve();
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+
+  private async setupAuthConsumer(authChannel: amqp.Channel): Promise<void> {
+    try {
+      const authQueueName = process.env.RABBITMQ_QUEUE || "auth_queue";
+
+      await authChannel.consume(
+        authQueueName,
+        async (msg: ConsumeMessage | null) => {
+          if (msg) {
+            console.log(`Received message: ${msg.content.toString()}`);
+            // Process message here
+            authChannel.ack(msg); // Acknowledge message
+          }
+        }
+      );
+
+      console.log(`Auth consumer set up on ${authQueueName} queue`);
+    } catch (error) {
+      console.error(`Error setting up auth consumer: ${error}`);
+    }
+  }
+
   // setup function that runs all setup necessities
   private async setup(): Promise<void> {
-    return new Promise((resolve) => {
-      this.setupRoutes();
-      resolve();
+    return new Promise(async (resolve, reject) => {
+      try {
+        this.setupRoutes();
+        await this.setupMessaging();
+        resolve();
+      } catch (err) {
+        reject(err);
+      }
     });
   }
 
@@ -102,8 +180,6 @@ export class Server {
           if (this.isReadyForConnections) {
             clearInterval(interval);
             resolve();
-          } else {
-            console.log("Not ready yet");
           }
         }, 100);
       }

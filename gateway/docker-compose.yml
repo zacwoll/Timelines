@@ -1,0 +1,39 @@
+version: '3'
+
+services:
+
+  rabbitmq:
+    # Specifies the RabbitMQ image to use, along with its version and the addition of the RabbitMQ management plugin
+    image: rabbitmq:3.9.5-management-alpine
+    environment:
+      # Specifies the IP addresses that are allowed to connect to the RabbitMQ instance
+      - RABBITMQ_ALLOW_IPS=${RABBITMQ_ALLOW_IPS}
+      # Specifies the IP address that the RabbitMQ management plugin should listen on
+      - RABBITMQ_MANAGEMENT_LISTEN_ADDR=${RABBITMQ_MANAGEMENT_LISTEN_ADDR}
+      # Specifies the default RabbitMQ username and password
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+      # Specifies the path to the RabbitMQ configuration file
+      - RABBITMQ_CONFIG_FILE=/etc/rabbitmq/rabbitmq.conf
+    hostname: rabbitmq
+    ports:
+      # Maps the container's 5672 port (default AMQP port) to the host machine's 5672 port
+      - "5672:5672"
+      # Maps the container's 15672 port (RabbitMQ management UI port) to the host machine's 15672 port
+      - "15672:15672" 
+    networks:
+      # Specifies the network that the RabbitMQ container will be connected to
+      - timelines-net
+    volumes:
+      # Mounts the rabbitmq.conf file as a volume in the container
+      - ../rabbitmq:/etc/rabbitmq
+    restart: always     
+    # Ensures that the RabbitMQ container restarts automatically if it crashes or if the Docker daemon is restarted
+
+networks:
+  timelines-net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.22.0.0/16

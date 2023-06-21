@@ -1,0 +1,76 @@
+{
+    "rabbit_version": "3.9.1",
+    "users": [
+      {
+        "name": "rabbitmq",
+        "password": "rabbitmq",
+        "tags": ""
+      },
+      {
+        "name": "admin",
+        "password": "rabbitmq5672",
+        "tags": "administrator"
+      },
+      {
+        "name": "gateway",
+        "password": "gateway",
+        "tags": "auth"
+      }
+    ],
+    "vhosts": [
+      {
+        "name": "auth_host",
+        "tracing": false
+      }
+    ],
+    "permissions": [
+      {
+        "user": "admin",
+        "vhost": "auth_host",
+        "configure": ".*",
+        "write": ".*",
+        "read": ".*"
+      },
+      {
+        "user": "gateway_user",
+        "vhost": "auth_host",
+        "configure": "",
+        "write": ".*",
+        "read": ".*"
+      }
+    ],
+    "exchanges": [
+      {
+        "name": "messages_exchange",
+        "vhost": "auth_host",
+        "type": "direct",
+        "durable": true
+      },
+      {
+        "name": "auth_exchange",
+        "vhost": "auth_host",
+        "type": "direct",
+        "durable": true
+      },
+      {
+        "name": "${RABBITMQ_DEAD_LETTER_EXCHANGE:-dead_letter_exchange}",
+        "vhost": "auth_host",
+        "type": "fanout"
+      }
+    ],
+    "queues": [
+      {
+        "name": "messages_queue",
+        "vhost": "auth_host",
+        "durable": true,
+        "auto_delete": false
+      },
+      {
+        "name": "auth_queue",
+        "vhost": "auth_host",
+        "durable": true,
+        "auto_delete": false
+      }
+    ]
+  }
+  

@@ -32,8 +32,8 @@ services:
       HASURA_GRAPHQL_ENDPOINT: http://hasura:8080/v1/graphql
       HASURA_GRAPHQL_ADMIN_SECRET: yourhasurasecret
 
-  express:
-    build: ./Backend
+  gateway:
+    build: ./Gateway
     depends_on:
       - database
     restart: always
