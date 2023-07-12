@@ -47,4 +47,9 @@ describe("Server", () => {
       expect(res.status).toBe(200);
     });
   });
+
+  afterAll(async () => {
+    // Perform any cleanup or teardown operations here
+    await server.close(); // Assuming there is a method to gracefully close the server
+  });
 });

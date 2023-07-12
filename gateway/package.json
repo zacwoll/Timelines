@@ -50,6 +50,7 @@
   "version": "0.0.0",
   "jest": {
     "testMatch": [
+      "<rootDir>/test/**/*.test.ts",
       "<rootDir>/./**/__tests__/**/*.ts?(x)",
       "<rootDir>/(test|.)/**/*(*.)@(spec|test).ts?(x)"
     ],

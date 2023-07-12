@@ -21,6 +21,7 @@ export class Server {
     void this.start();
   }
 
+  // Public method to get the server
   public getServer() {
     return this.server;
   }
@@ -49,6 +50,7 @@ export class Server {
     });
   }
 
+  // Creates connection to Rabbitmq server
   private async setupMessaging(): Promise<void> {
     return new Promise(async (resolve, reject) => {
       try {
@@ -96,6 +98,7 @@ export class Server {
     });
   }
 
+  // Sets up a consumer for the auth exchange
   private async setupAuthConsumer(authChannel: amqp.Channel): Promise<void> {
     try {
       const authQueueName = process.env.RABBITMQ_QUEUE || "auth_queue";
@@ -118,6 +121,8 @@ export class Server {
   }
 
   // setup function that runs all setup necessities
+  // sets up routes
+  // sets up Rabbitmq messaging
   private async setup(): Promise<void> {
     return new Promise(async (resolve, reject) => {
       try {
@@ -130,7 +135,7 @@ export class Server {
     });
   }
 
-  // Open for connections
+  // Enable traffic for the server
   private async listen(): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
@@ -158,6 +163,7 @@ export class Server {
     await this.listen();
   }
 
+  // Pauses traffic on the server
   public async pause() {
     if (this.server) {
       this.server.close();
@@ -165,11 +171,21 @@ export class Server {
     }
   }
 
+  // Resumes traffic on the server.
   public async resume() {
     await this.setupComplete;
     await this.listen();
   }
 
+  // Stops the server and closes resources
+  public async close() {
+    // Closed all server traffic
+    await this.server?.close();
+    // Closed connection to RabbitMQ
+    await this.connection?.close();
+  }
+
+  // Returns a promise to be ready
   public async isReady(): Promise<void> {
     return new Promise<void>((resolve) => {
       if (this.isReadyForConnections) {
