@@ -1,4 +1,5 @@
 # Currently a list of commands to execute on the rabbitq server
+# If you've come here because you've rebooted the rabbitmq server again, check for zombie processes
 
 # Create a user for the API gateway
 

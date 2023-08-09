@@ -79,6 +79,9 @@ const project = new TypeScriptAppProject({
       ".projenrc.ts", // add .projenrc.ts to the include array
       "tsconfig.json",
     ],
+    exclude: [
+      "lib"
+    ]
   },
   jestOptions: {
     jestConfig: {
@@ -94,5 +97,10 @@ const project = new TypeScriptAppProject({
     },
   },
 });
+
+const precompileTask = project.tasks.tryFind('pre-compile') || project.addTask('pre-compile');
+
+// Prepend the step to remove .d.ts files to the compile task
+precompileTask.prependExec('find ./lib -name "*.d.ts" -delete');
 
 project.synth();

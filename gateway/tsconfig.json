@@ -41,5 +41,7 @@
     ".projenrc.ts",
     "tsconfig.json"
   ],
-  "exclude": []
+  "exclude": [
+    "lib"
+  ]
 }

@@ -2,6 +2,8 @@ import { Server as HTTPServer } from "http";
 import amqp, { ConsumeMessage, Replies } from "amqplib";
 import dotenv from "dotenv";
 import express, { Express } from "express";
+import { RabbitmqService } from "./RabbitmqService"; // Importing our abstraction class
+
 dotenv.config();
 
 export class Server {
@@ -10,8 +12,8 @@ export class Server {
   private server?: HTTPServer;
   private setupComplete: Promise<void>;
   private isReadyForConnections: boolean;
-  private connection?: amqp.Connection;
   private authChannel?: amqp.Channel;
+  private rabbitmqService?: RabbitmqService;
   // private authQueueName?: string;
 
   constructor(port: number) {
@@ -64,15 +66,15 @@ export class Server {
       try {
         // Connect to RabbitMQ
         console.log("Setting up connection");
-        const rabbitmqHost = "localhost";
-        // const rabbitmqHost = process.env.RABBITMQ_HOST || "localhost";
-        const rabbitmqPort = process.env.RABBITMQ_PORT || 5672;
-        const rabbitmqUser = process.env.RABBITMQ_GATEWAY_USER;
-        const rabbitmqPass = process.env.RABBITMQ_GATEWAY_PASSWD;
-        const rabbitmqAuthHost = process.env.RABBITMQ_AUTH_HOST || "";
-        const connectionUrl = `amqp://${rabbitmqUser}:${rabbitmqPass}@${rabbitmqHost}:${rabbitmqPort}/${rabbitmqAuthHost}`;
-        console.log(connectionUrl);
-        this.connection = await amqp.connect(connectionUrl);
+        const connectionOptions = {
+          username: process.env.RABBITMQ_GATEWAY_USER || "",
+          password: process.env.RABBITMQ_GATEWAY_PASSWD || "",
+          hostname: 'localhost',// Might be 'rabbitmq' in the future, defined in our docker network as such
+          port: process.env.RABBITMQ_PORT || "5672"
+        }
+        
+        this.rabbitmqService = new RabbitmqService(connectionOptions);
+        await this.rabbitmqService.connect();
 
         // Create the auth channel
         console.log("Setting up auth queue");
@@ -80,7 +82,7 @@ export class Server {
         const authExchangeName =
           process.env.RABBITMQ_EXCHANGE || "auth_exchange";
         console.log("Creating auth channel");
-        const authChannel = await this.connection.createChannel();
+        const authChannel = await this.rabbitmqService.createChannel();
 
         // Pre-Fetch is required to begin processing
         await authChannel.prefetch(1);
@@ -211,7 +213,7 @@ export class Server {
     // Closed all server traffic
     await this.server?.close();
     // Closed connection to RabbitMQ
-    await this.connection?.close();
+    await this.rabbitmqService?.close();
   }
 
   // Returns a promise to be ready
@@ -235,7 +237,8 @@ export class Server {
 // // Demo Code: Instantiate the server and start it
 const port = 3000; // Specify your desired port number
 const server = new Server(port);
-server.startServer().catch((error) => {
-  console.error("Failed to start the server:", error);
-  process.exit(1); // Terminate the process if the server fails to start
-});
+console.log(server);
+// server.startServer().catch((error) => {
+//   console.error("Failed to start the server:", error);
+//   process.exit(1); // Terminate the process if the server fails to start
+// });
