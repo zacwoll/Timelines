@@ -10,6 +10,9 @@ describe("Server", () => {
     server = new Server(3000);
     await server.isReady();
     request = supertest(server.getServer());
+
+    // // Create a spy on console.log
+    // consoleLogSpy = jest.spyOn(console, "log");
   });
 
   describe("setup", () => {
@@ -21,12 +24,18 @@ describe("Server", () => {
 
   describe("endpoints", () => {
     it("should respond to POST /webhook with a 200 status code", async () => {
+      const [code, guildId] = ["testCode", "testId"];
       const res = await request.post("/webhook").send({
-        code: "test",
-        guildId: "test",
+        code,
+        guildId,
       });
+
       expect(res.status).toBe(200);
     });
+
+    // it("should return the message sent to the rabbitmq auth exchange", async () => {
+
+    // })
 
     it("should respond to GET /timelines/:user with a message containing the user", async () => {
       const res = await request.get("/timelines/john");
@@ -51,5 +60,6 @@ describe("Server", () => {
   afterAll(async () => {
     // Perform any cleanup or teardown operations here
     await server.close(); // Assuming there is a method to gracefully close the server
+    // consoleLogSpy.mockRestore();
   });
 });

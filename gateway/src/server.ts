@@ -1,5 +1,5 @@
 import { Server as HTTPServer } from "http";
-import amqp, { ConsumeMessage } from "amqplib";
+import amqp, { ConsumeMessage, Replies } from "amqplib";
 import dotenv from "dotenv";
 import express, { Express } from "express";
 dotenv.config();
@@ -12,13 +12,14 @@ export class Server {
   private isReadyForConnections: boolean;
   private connection?: amqp.Connection;
   private authChannel?: amqp.Channel;
+  // private authQueueName?: string;
 
   constructor(port: number) {
     this.app = express();
     this.port = port;
     this.setupComplete = this.setup();
     this.isReadyForConnections = false;
-    void this.start();
+    void this.startServer();
   }
 
   // Public method to get the server
@@ -30,6 +31,7 @@ export class Server {
   private setupRoutes() {
     this.app.use(express.json());
 
+    // Webhook Endpoint
     // Webhook is what we need to use when authorizing a new guild
     this.app.post("/webhook", (req, res) => {
       const code = req.body.code;
@@ -37,16 +39,22 @@ export class Server {
 
       console.log(`Authorization code: ${code}`);
       console.log(`Guild ID: ${guildId}`);
+      console.log(
+        `Sending to ${process.env.RABBITMQ_QUEUE} payload ${guildId}: ${code}`
+      );
+      this.authChannel?.sendToQueue(
+        process.env.RABBITMQ_QUEUE || "",
+        Buffer.from(`Stream Data: ${guildId}: ${code}`)
+      );
 
-      res.sendStatus(200);
+      res.status(200).send(`${guildId}: ${code} received`);
     });
 
     // Timelines Endpoint for the user
     this.app.get("/timelines/:user", (req, res) => {
       const user = req.params.user;
 
-      res.send(`Timeline data for user ${user}`);
-      res.sendStatus(200);
+      res.status(200).send(`Timeline data for user ${user}`);
     });
   }
 
@@ -74,9 +82,16 @@ export class Server {
         console.log("Creating auth channel");
         const authChannel = await this.connection.createChannel();
 
+        // Pre-Fetch is required to begin processing
+        await authChannel.prefetch(1);
+
         // Assert the auth queue and exchange
         await authChannel.assertQueue(authQueueName, {
           durable: true,
+          arguments: {
+            "x-queue-type": "stream",
+            // 'exclusive': 'false'
+          },
         });
         await authChannel.assertExchange(authExchangeName, "direct", {
           durable: true,
@@ -87,8 +102,13 @@ export class Server {
 
         // Save the auth channel
         this.authChannel = authChannel;
-        console.log("Setup Auth Connsumer");
-        await this.setupAuthConsumer(this.authChannel);
+
+        console.log("Setup Auth Consumer");
+        const consumerTag = await this.setupAuthConsumer(
+          this.authChannel,
+          authQueueName
+        );
+        console.log(consumerTag);
 
         console.log("Connected to RabbitMQ");
         resolve();
@@ -99,25 +119,27 @@ export class Server {
   }
 
   // Sets up a consumer for the auth exchange
-  private async setupAuthConsumer(authChannel: amqp.Channel): Promise<void> {
-    try {
-      const authQueueName = process.env.RABBITMQ_QUEUE || "auth_queue";
-
-      await authChannel.consume(
-        authQueueName,
-        async (msg: ConsumeMessage | null) => {
-          if (msg) {
-            console.log(`Received message: ${msg.content.toString()}`);
-            // Process message here
-            authChannel.ack(msg); // Acknowledge message
+  private async setupAuthConsumer(
+    authChannel: amqp.Channel,
+    authQueueName: string
+  ): Promise<Replies.Consume> {
+    return new Promise((resolve, reject) => {
+      try {
+        let consumerTag = authChannel.consume(
+          authQueueName || "",
+          (msg: ConsumeMessage | null) => {
+            if (msg) {
+              console.log(`Received message: ${msg.content.toString()}`);
+              // Process message here
+              authChannel.ack(msg); // Acknowledge message
+            }
           }
-        }
-      );
-
-      console.log(`Auth consumer set up on ${authQueueName} queue`);
-    } catch (error) {
-      console.error(`Error setting up auth consumer: ${error}`);
-    }
+        );
+        resolve(consumerTag);
+      } catch (err) {
+        reject(err);
+      }
+    });
   }
 
   // setup function that runs all setup necessities
@@ -126,8 +148,8 @@ export class Server {
   private async setup(): Promise<void> {
     return new Promise(async (resolve, reject) => {
       try {
-        this.setupRoutes();
         await this.setupMessaging();
+        this.setupRoutes();
         resolve();
       } catch (err) {
         reject(err);
@@ -136,29 +158,36 @@ export class Server {
   }
 
   // Enable traffic for the server
+  // Returns a promise that resolves a listening state
+  // Enable traffic for the server
   private async listen(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      try {
-        if (!this.server) {
-          this.server = this.app.listen(this.port, () => {
-            console.log(
-              `Example app listening at http://localhost:${this.port}`
-            );
+    try {
+      // If the server is not already running, start it.
+      if (!this.server) {
+        this.server = await new Promise((resolve) => {
+          const serverInstance = this.app.listen(this.port, () => {
             this.isReadyForConnections = true;
+            console.log(
+              `Server is now listening at http://localhost:${this.port}`
+            );
+            resolve(serverInstance);
           });
-        } else {
-          console.log(`Example app resumed at http://localhost:${this.port}`);
-          this.isReadyForConnections = true;
-        }
-        resolve();
-      } catch (err) {
-        reject(err);
+        });
+      } else {
+        // The server is already running, so it is resuming.
+        console.log(
+          `Server is already running at http://localhost:${this.port}`
+        );
+        this.isReadyForConnections = true;
       }
-    });
+    } catch (err) {
+      // If there's an error starting the server, reject the promise.
+      throw err;
+    }
   }
 
   // When setup is complete, start the server
-  public async start() {
+  public async startServer() {
     await this.setupComplete;
     await this.listen();
   }
@@ -202,3 +231,11 @@ export class Server {
     });
   }
 }
+
+// // Demo Code: Instantiate the server and start it
+const port = 3000; // Specify your desired port number
+const server = new Server(port);
+server.startServer().catch((error) => {
+  console.error("Failed to start the server:", error);
+  process.exit(1); // Terminate the process if the server fails to start
+});
