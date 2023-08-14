@@ -1,8 +1,10 @@
 import { Server as HTTPServer } from "http";
-import amqp, { ConsumeMessage, Replies } from "amqplib";
+import amqp from "amqplib";
 import dotenv from "dotenv";
 import express, { Express } from "express";
-import { RabbitmqService } from "./RabbitmqService"; // Importing our abstraction class
+import { RabbitmqServiceConfig, RabbitmqService } from "./RabbitmqService"; // Importing our abstraction class
+import { MessageService } from "./MessageService";
+import { GatewayServer } from "./GatewayServer";
 
 dotenv.config();
 
@@ -14,6 +16,7 @@ export class Server {
   private isReadyForConnections: boolean;
   private authChannel?: amqp.Channel;
   private rabbitmqService?: RabbitmqService;
+  private messageService?: MessageService;
   // private authQueueName?: string;
 
   constructor(port: number) {
@@ -60,103 +63,41 @@ export class Server {
     });
   }
 
-  // Creates connection to Rabbitmq server
-  private async setupMessaging(): Promise<void> {
-    return new Promise(async (resolve, reject) => {
-      try {
-        // Connect to RabbitMQ
-        console.log("Setting up connection");
-        const connectionOptions = {
-          username: process.env.RABBITMQ_GATEWAY_USER || "",
-          password: process.env.RABBITMQ_GATEWAY_PASSWD || "",
-          hostname: 'localhost',// Might be 'rabbitmq' in the future, defined in our docker network as such
-          port: process.env.RABBITMQ_PORT || "5672"
-        }
-        
-        this.rabbitmqService = new RabbitmqService(connectionOptions);
-        await this.rabbitmqService.connect();
-
-        // Create the auth channel
-        console.log("Setting up auth queue");
-        const authQueueName = process.env.RABBITMQ_QUEUE || "auth_queue";
-        const authExchangeName =
-          process.env.RABBITMQ_EXCHANGE || "auth_exchange";
-        console.log("Creating auth channel");
-        const authChannel = await this.rabbitmqService.createChannel();
-
-        // Pre-Fetch is required to begin processing
-        await authChannel.prefetch(1);
-
-        // Assert the auth queue and exchange
-        await authChannel.assertQueue(authQueueName, {
-          durable: true,
-          arguments: {
-            "x-queue-type": "stream",
-            // 'exclusive': 'false'
-          },
-        });
-        await authChannel.assertExchange(authExchangeName, "direct", {
-          durable: true,
-        });
-
-        // Bind the queue to the exchange
-        await authChannel.bindQueue(authQueueName, authExchangeName, "");
-
-        // Save the auth channel
-        this.authChannel = authChannel;
-
-        console.log("Setup Auth Consumer");
-        const consumerTag = await this.setupAuthConsumer(
-          this.authChannel,
-          authQueueName
-        );
-        console.log(consumerTag);
-
-        console.log("Connected to RabbitMQ");
-        resolve();
-      } catch (error) {
-        reject(error);
-      }
-    });
-  }
-
-  // Sets up a consumer for the auth exchange
-  private async setupAuthConsumer(
-    authChannel: amqp.Channel,
-    authQueueName: string
-  ): Promise<Replies.Consume> {
-    return new Promise((resolve, reject) => {
-      try {
-        let consumerTag = authChannel.consume(
-          authQueueName || "",
-          (msg: ConsumeMessage | null) => {
-            if (msg) {
-              console.log(`Received message: ${msg.content.toString()}`);
-              // Process message here
-              authChannel.ack(msg); // Acknowledge message
-            }
-          }
-        );
-        resolve(consumerTag);
-      } catch (err) {
-        reject(err);
-      }
-    });
-  }
-
   // setup function that runs all setup necessities
   // sets up routes
   // sets up Rabbitmq messaging
   private async setup(): Promise<void> {
     return new Promise(async (resolve, reject) => {
       try {
-        await this.setupMessaging();
+        const connectionOptions = {
+          user: {
+            username: process.env.RABBITMQ_GATEWAY_USER || "",
+            password: process.env.RABBITMQ_GATEWAY_PASSWD || "",
+          },
+          // Might be 'rabbitmq' in the future, defined in our docker network as such
+          hostname: 'localhost',
+          port: process.env.RABBITMQ_PORT || "5672"
+        }
+        this.messageService = await this.setupMessageService(connectionOptions);
         this.setupRoutes();
+        // this.setupRoutes(messageService);
+        this.messageService.sendWebhookPayload({guildId: "foo", code: "bar"});
         resolve();
       } catch (err) {
         reject(err);
       }
     });
+  }
+
+  private async setupMessageService(options: RabbitmqServiceConfig): Promise<MessageService> {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const service = await MessageService.create(options);
+        resolve(service);
+      } catch (error) {
+        reject(error);
+      }
+    })
   }
 
   // Enable traffic for the server
@@ -235,9 +176,22 @@ export class Server {
 }
 
 // // Demo Code: Instantiate the server and start it
-const port = 3000; // Specify your desired port number
-const server = new Server(port);
-console.log(server);
+const port = '3000'; // Specify your desired port number
+// @ts-ignore
+// const server = new Server(port);
+const rabbitmqServiceConfig = {
+  user: {
+    username: process.env.RABBITMQ_GATEWAY_USER || "",
+    password: process.env.RABBITMQ_GATEWAY_PASSWD || "",
+  },
+  // Might be 'rabbitmq' in the future, defined in our docker network as such
+  hostname: 'localhost',
+  port: process.env.RABBITMQ_PORT || "5672"
+}
+
+// @ts-ignore
+const server = GatewayServer.create({ rabbitmqServiceConfig, port});
+
 // server.startServer().catch((error) => {
 //   console.error("Failed to start the server:", error);
 //   process.exit(1); // Terminate the process if the server fails to start

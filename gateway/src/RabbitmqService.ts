@@ -1,25 +1,29 @@
 import amqp, { ConsumeMessage, Replies } from "amqplib";
 
-export interface ConnectionOptions {
-    username: string;
-    password: string;
+export interface RabbitmqServiceConfig {
+    user: RabbitmqServiceUser;
     hostname: string;
     port: string;
     vhost?: string;
-  }
+}
+
+export interface RabbitmqServiceUser {
+    username: string;
+    password: string;
+}
 
 export class RabbitmqService {
     private connection: amqp.Connection | null = null;
     private channels: amqp.Channel[] = [];
   
-    constructor(private options: ConnectionOptions) {
+    constructor(private options: RabbitmqServiceConfig) {
 
     }
   
     public async connect(): Promise<void> {
-        const { username, password, hostname, port } = this.options;
+        const { user, hostname, port } = this.options;
         const vhost = this.options.vhost ? `/${this.options.vhost}` : '';
-        const connectionUrl = `amqp://${username}:${password}@${hostname}:${port}${vhost}`;
+        const connectionUrl = `amqp://${user.username}:${user.password}@${hostname}:${port}${vhost}`;
         this.connection = await amqp.connect(connectionUrl);
     }
   
