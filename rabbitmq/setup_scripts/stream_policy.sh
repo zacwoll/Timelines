@@ -10,6 +10,14 @@ rabbitmqctl set_permissions gateway ".*" ".*" ".*"
 # set the user tag on the gateway user
 rabbitmqctl set_user_tags gateway ".*" ".*" ".*"
 
+# create a user discord
+rabbitmqctl add_user discord discord
+rabbitmqctl set_permissions discord ".*" ".*" ".*"
+
+# set the user tag on the discord user
+rabbitmqctl set_user_tags discord ".*" ".*" ".*"
+
+
 
 # Set the max_length_bytes policy to the max length of bytes for messages
 # EX:  For example, if the maximum size of a Stream is set to "x-max-length-bytes":100000000, the Stream will discard the oldest messages when the Stream’s disk usage hits 100000000 bytes. RabbitMQ does not provide a default value for this.

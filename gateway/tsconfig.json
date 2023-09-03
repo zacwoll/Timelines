@@ -39,7 +39,6 @@
     "src/**/*.ts",
     "test/**/*.ts",
     ".projenrc.ts",
-    "tsconfig.json"
   ],
   "exclude": [
     "lib"
