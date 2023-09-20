@@ -2,7 +2,6 @@ import { RabbitmqServiceConfig, RabbitmqService } from "./RabbitmqService";
 import amqp, { ConsumeMessage } from "amqplib";
 
 interface webhookPayload {
-    guildId: string,
     code: string
 }
 
@@ -28,7 +27,7 @@ export class MessageService {
 
     public sendWebhookPayload(payload: webhookPayload) {
         try {
-            this.webhookChannel.sendToQueue(this.webhookQueue.queue || 'webhook_queue', Buffer.from(`${payload.guildId} ${payload.code}`));
+            this.webhookChannel.sendToQueue(this.webhookQueue.queue || 'webhook_queue', Buffer.from(`${payload.code}`));
         } catch (error) {
             console.log(error);
         }

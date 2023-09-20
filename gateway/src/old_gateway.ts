@@ -81,7 +81,7 @@ export class Server {
         this.messageService = await this.setupMessageService(connectionOptions);
         this.setupRoutes();
         // this.setupRoutes(messageService);
-        this.messageService.sendWebhookPayload({guildId: "foo", code: "bar"});
+        this.messageService.sendWebhookPayload({code: "bar"});
         resolve();
       } catch (err) {
         reject(err);
