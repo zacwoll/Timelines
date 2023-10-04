@@ -1,3 +1,4 @@
 .env
 Frontend/.angular/cache
 Frontend/src/environments
+Frontend/src/environments/environment.ts
