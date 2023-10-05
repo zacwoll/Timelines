@@ -1,19 +1,16 @@
-import { Injectable } from "@angular/core";
-import { HttpClient } from "@angular/common/http";
-import { Router } from "@angular/router";
-import { catchError, map } from "rxjs/operators";
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
+import { catchError, map } from 'rxjs/operators';
 
 @Injectable({
-  providedIn: "root",
+  providedIn: 'root',
 })
 export class AuthService {
-  private authUrl = "YOUR_AUTH_SERVER_URL"; // Replace with your authentication server URL
+  private authUrl = 'YOUR_AUTH_SERVER_URL'; // Replace with your authentication server URL
   private accessToken: string | null = null;
 
-  constructor(
-    private http: HttpClient,
-    private router: Router
-  ) {}
+  constructor(private http: HttpClient, private router: Router) {}
 
   // Login with Discord OAuth2
   login() {
@@ -33,7 +30,7 @@ export class AuthService {
           return response;
         }),
         catchError((error) => {
-          console.error("OAuth2 callback error:", error);
+          console.error('OAuth2 callback error:', error);
           // Handle errors
           // Redirect to an error page or display an error message
           throw error;
@@ -43,7 +40,7 @@ export class AuthService {
         // Optionally, fetch user data
         // this.fetchUserData();
         // Redirect to the desired route (e.g., user profile)
-        this.router.navigate(["/profile"]);
+        this.router.navigate(['/profile']);
       });
   }
 
@@ -52,7 +49,7 @@ export class AuthService {
     // Clear user data and tokens
     this.accessToken = null;
     // Redirect to the login page
-    this.router.navigate(["/landing-pages"]);
+    this.router.navigate(['/landing-pages']);
   }
 
   // // Fetch user data (replace with your API endpoint)

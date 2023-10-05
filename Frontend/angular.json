@@ -3,33 +3,11 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "Frontend": {
+    "FronterEnd": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
-          "style": "scss",
-          "skipTests": true
-        },
-        "@schematics/angular:class": {
-          "skipTests": true
-        },
-        "@schematics/angular:directive": {
-          "skipTests": true
-        },
-        "@schematics/angular:guard": {
-          "skipTests": true
-        },
-        "@schematics/angular:interceptor": {
-          "skipTests": true
-        },
-        "@schematics/angular:pipe": {
-          "skipTests": true
-        },
-        "@schematics/angular:resolver": {
-          "skipTests": true
-        },
-        "@schematics/angular:service": {
-          "skipTests": true
+          "style": "scss"
         }
       },
       "root": "",
@@ -39,7 +17,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "outputPath": "dist/frontend",
+            "outputPath": "dist/fronter-end",
             "index": "src/index.html",
             "main": "src/main.ts",
             "polyfills": [
@@ -93,10 +71,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "Frontend:build:production"
+              "browserTarget": "FronterEnd:build:production"
             },
             "development": {
-              "browserTarget": "Frontend:build:development"
+              "browserTarget": "FronterEnd:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -104,7 +82,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "Frontend:build"
+            "browserTarget": "FronterEnd:build"
           }
         },
         "test": {
@@ -128,8 +106,5 @@
         }
       }
     }
-  },
-  "cli": {
-    "analytics": false
   }
 }
