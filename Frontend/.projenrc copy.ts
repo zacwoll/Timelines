@@ -95,7 +95,7 @@ import {
     },
     gitignore: ['.env'],
   });
-  
+
   // const precompileTask = project.tasks.tryFind('pre-compile') || project.addTask('pre-compile');
   
   // // Prepend the step to remove .d.ts files to the compile task

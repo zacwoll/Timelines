@@ -35,6 +35,8 @@ client.on('error', () => {
     console.error('Client has errored');
 });
 
+// Messages are read in, and printed to console.
+// Save the messages in a queue and push them out via http?
 client.on(Events.MessageCreate, (message) => {
     const { content, author, channel, guild } = message;
 
