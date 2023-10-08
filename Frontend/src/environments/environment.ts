@@ -15,7 +15,7 @@ export const environment: Environment = {
   // Redirect_URI here?
   // API_URL: "https://discord.com/api"
   AUTHORIZE_URL:
-    'https://discord.com/api/oauth2/authorize?client_id=1088577340709281812&redirect_uri=http%3A%2F%2Flocalhost%3A4200%2Fauth%2Fcallback&response_type=code&scope=guilds',
+    'https://discord.com/api/oauth2/authorize?client_id=1088577340709281812&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fauth%2Fcallback&response_type=code&scope=guilds',
   ADD_BOT_URL:
     'https://discord.com/api/oauth2/authorize?client_id=1088577340709281812&permissions=66560&scope=bot%20applications.commands',
 };

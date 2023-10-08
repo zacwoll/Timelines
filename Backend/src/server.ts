@@ -1,5 +1,6 @@
 // It's that time of year again. The time of year I create a random server class and build some bullshit that I eventually forget lmao!
 
+import cookie from "cookie";
 import { Client, GatewayIntentBits } from "discord.js";
 import express from "express";
 import { Response } from "express-serve-static-core";
@@ -25,6 +26,66 @@ const discordClient = new Client(options);
 
 // Middleware to parse JSON request bodies
 app.use(express.json());
+
+app.get("/auth/callback", async (req, res) => {
+  console.log("Visitor at /auth/callback");
+  try {
+    const code = req.query.code?.toString() || ""; // Get the 'code' query parameter from the request
+    const redirect_uri = "localhost:3000/auth/set_cookies";
+    const client_id = process.env.CLIENT_ID || "";
+    const client_secret = process.env.CLIENT_SECRET || "";
+    if (client_id === "" || client_secret === "") {
+      console.log("No ENV detected");
+      res.status(500).send("Internal Server Error");
+    } else if (!code) {
+      res.status(400).send("No Code provided");
+    }
+
+    // Make a POST request to the Discord Token authenticator
+    const response = await fetch("https://discord.com/api/v10/oauth2/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        grant_type: "authorization_code",
+        code: code,
+        redirect_uri, // Replace with your redirect URI
+        client_id, // Retrieve client ID from environment variable
+        client_secret, // Retrieve client secret from environment variable
+      }),
+    });
+    if (response.ok) {
+      const data = await response.json();
+      // @ts-ignore
+      const { access_token, token_type, expires_in, refresh_token } = data;
+      // Set the access token in a cookie
+      res.setHeader("Set-Cookie", [
+        cookie.serialize("access_token", access_token, {
+          httpOnly: true,
+        }),
+        cookie.serialize("refresh_token", refresh_token, {
+          httpOnly: true,
+        }),
+        cookie.serialize("expires_in", expires_in, {
+          httpOnly: true,
+        }),
+      ]);
+
+      res.status(200).send("Authentication successful");
+    } else {
+      console.error(
+        "Error exchanging code for token:",
+        response.status,
+        response.statusText,
+      );
+      res.status(500).send("Internal Server Error");
+    }
+  } catch (error) {
+    console.error("Error handling authentication callback:", error);
+    res.status(500).send("Internal Server Error");
+  }
+});
 
 // Endpoint to launch data streaming
 app.post("/streaming/launch", (req, res) => {
