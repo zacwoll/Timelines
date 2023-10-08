@@ -18,6 +18,7 @@ export class OAuthCallbackComponent implements OnInit {
       const code = queryParams['code'];
       if (code) {
         // Handle the OAuth2 callback using AuthService's handleCallback
+        // @ts-ignore
         this.authService.handleCallback(code);
       } else {
         console.log('no code');
