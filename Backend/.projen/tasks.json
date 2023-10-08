@@ -162,13 +162,13 @@
           "exec": "npm update npm-check-updates"
         },
         {
-          "exec": "npm-check-updates --upgrade --target=minor --peer --dep=dev,peer,prod,optional --filter=@types/express,@types/jest,@types/node,@types/supertest,@typescript-eslint/eslint-plugin,@typescript-eslint/parser,eslint-config-prettier,eslint-import-resolver-node,eslint-import-resolver-typescript,eslint-plugin-import,eslint-plugin-prettier,eslint,jest,jest-junit,npm-check-updates,prettier,projen,supertest,ts-jest,ts-node,typescript,axios,discord.js,dotenv"
+          "exec": "npm-check-updates --upgrade --target=minor --peer --dep=dev,peer,prod,optional --filter=@types/jest,@types/node,@types/supertest,@typescript-eslint/eslint-plugin,@typescript-eslint/parser,eslint-config-prettier,eslint-import-resolver-node,eslint-import-resolver-typescript,eslint-plugin-import,eslint-plugin-prettier,eslint,jest,jest-junit,npm-check-updates,prettier,projen,supertest,ts-jest,ts-node,typescript,@types/express,@types/express-serve-static-core,axios,discord.js,dotenv,express"
         },
         {
           "exec": "npm install"
         },
         {
-          "exec": "npm update @types/express @types/jest @types/node @types/supertest @typescript-eslint/eslint-plugin @typescript-eslint/parser eslint-config-prettier eslint-import-resolver-node eslint-import-resolver-typescript eslint-plugin-import eslint-plugin-prettier eslint jest jest-junit npm-check-updates prettier projen supertest ts-jest ts-node typescript axios discord.js dotenv"
+          "exec": "npm update @types/jest @types/node @types/supertest @typescript-eslint/eslint-plugin @typescript-eslint/parser eslint-config-prettier eslint-import-resolver-node eslint-import-resolver-typescript eslint-plugin-import eslint-plugin-prettier eslint jest jest-junit npm-check-updates prettier projen supertest ts-jest ts-node typescript @types/express @types/express-serve-static-core axios discord.js dotenv express"
         },
         {
           "exec": "npx projen"

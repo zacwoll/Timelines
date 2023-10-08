@@ -1,29 +1,25 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { LandingPageComponent } from './landing-page/landing-page.component';
-import { OAuthCallbackComponent } from './oauth-callback/oauth-callback.component'
+import { HomeComponent } from './home/home.component';
+import { AuthGuard } from './auth.guard';
 
 const routes: Routes = [
   {
     path: '',
-    redirectTo: '/landing-page',
     pathMatch: 'full',
-    // canActivate: [AuthGuard], TODO: Implement AuthGuard
+    canActivate: [AuthGuard],
+    component: HomeComponent
   },
   {
     path: 'landing-page',
     component: LandingPageComponent,
   },
-  {
-    path: 'auth/callback',
-    component: OAuthCallbackComponent,
-  }
-  // Define routes for individual user pages (e.g., /userID)
+  // the callback was handled on this side, it's been moved to backend
   // {
-  //   path: ":userID",
-  //   component: UserProfileComponent, // Replace with your user profile component
+  //   path: 'auth/callback',
+  //   component: OAuthCallbackComponent,
   // },
-  // Other routes as needed
 ];
 @NgModule({
   imports: [RouterModule.forRoot(routes)],

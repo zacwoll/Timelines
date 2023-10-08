@@ -9,9 +9,9 @@ const redirect_uri = process.env.REDIRECT_URI || "http://localhost";
 const AUTH_SCOPES = ["bot"];
 
 const botConfig = {
-  loginToken: process.env.DISCORD_PUBLIC_KEY || "",
-  clientId: process.env.DISCORD_CLIENT_ID || "",
-  clientSecret: process.env.DISCORD_CLIENT_SECRET || "",
+  loginToken: process.env.BOT_TOKEN || "",
+  clientId: process.env.CLIENT_ID || "",
+  clientSecret: process.env.CLIENT_SECRET || "",
   redirectUri: redirect_uri,
   scopes: AUTH_SCOPES,
 };
@@ -46,4 +46,13 @@ Guild: ${guild ? guild.name : "Direct Message"}`);
   console.log(message);
 });
 
-app.login(botConfig.loginToken);
+// IIFE logs in the bot
+(async () => {
+  try {
+    await app.login(botConfig.loginToken);
+  } catch (error) {
+    console.error("Login failed", error);
+  }
+})().catch((error) => {
+  console.error("IIFE execution error:", error);
+});

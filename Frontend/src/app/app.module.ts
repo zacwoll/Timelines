@@ -5,13 +5,13 @@ import { HttpClientModule } from '@angular/common/http';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { LandingPageComponent } from './landing-page/landing-page.component';
-import { OAuthCallbackComponent } from './oauth-callback/oauth-callback.component';
+import { HomeComponent } from './home/home.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     LandingPageComponent,
-    OAuthCallbackComponent
+    HomeComponent
   ],
   imports: [
     BrowserModule,

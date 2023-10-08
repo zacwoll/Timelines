@@ -39,6 +39,7 @@
   "ignorePatterns": [
     "node_modules/",
     "coverage",
+    "*.d.ts",
     "!.projenrc.ts",
     "!projenrc/**/*.ts"
   ],

@@ -1,13 +1,42 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Router } from '@angular/router';
-import { catchError, map } from 'rxjs/operators';
+import { NavigationExtras, Router } from '@angular/router';
+import { catchError, map, mergeMap, switchMap } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
+import { forkJoin, of } from 'rxjs';
+
+export type AccessTokenResponse = {
+  access_token: string,
+  token_type: any,
+  expires_in: number,
+  refresh_token: string,
+  scope: any
+}
+
+import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
+  constructor(private http: HttpClient) {}
+
+  // Verify the token at 'localhost:3000/api/check_cookie'
+  verifyToken(): Observable<boolean> {
+    return this.http.get<{ authenticated: boolean }>(
+      'http://localhost:3000/api/check_cookie'
+    ).pipe(
+      map(response => response.authenticated),
+      catchError(() => of(false)) // Handle network errors or other errors
+    );
+  }
+}
+
+
+@Injectable({
+  providedIn: 'root',
+})
+export class NotAuthService {
   private accessToken: string | null = null;
 
   constructor(private http: HttpClient, private router: Router) {}
@@ -20,8 +49,6 @@ export class AuthService {
 
   // Handle the OAuth2 callback
   handleCallback(code: string) {
-    console.log('handleCallback');
-
     // Create a URL-encoded request body
     const requestBody = new URLSearchParams();
     requestBody.set('client_id', environment.CLIENT_ID);
@@ -34,30 +61,81 @@ export class AuthService {
     const headers = new HttpHeaders({
       'Content-Type': 'application/x-www-form-urlencoded',
     });
-    // Exchange the authorization code for an access token
+
     this.http
       .post('https://discord.com/api/oauth2/token', requestBody.toString(), {
         headers,
       })
       .pipe(
-        map((response: any) => {
-          // Store the access token securely (e.g., in LocalStorage)
-          this.accessToken = response.access_token;
-          console.log(this.accessToken);
-          return response;
+        mergeMap((response: any) => {
+          // No need to store the access token, you can use it directly
+          const accessToken = response.access_token;
+
+          const tokenResponse = response;
+
+          // Make an API request to get user data using the access token
+          const userDataRequest = this.http.get(
+            'https://discord.com/api/v10/users/@me',
+            {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+            }
+          );
+
+          // Make an API request to get guild data using the access token
+          const guildDataRequest = this.http.get(
+            'https://discord.com/api/v10/users/@me/guilds',
+            {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+            }
+          );
+
+          // Combine the two requests into a single observable
+          return forkJoin([userDataRequest, guildDataRequest]).pipe(
+            map(([userData, guildData]: [any, any]) => {
+
+              // Extract relevant user information
+              console.log('userData', userData);
+
+              // Extract relevant guild information
+              console.log('guildData', guildData);
+
+              // Create an object with the required information
+              const userInfo = {
+                tokenResponse,
+                userData,
+                guildData,
+              };
+
+              // Return this object
+              return userInfo;
+            }),
+            catchError((error) => {
+              // Handle errors in the user or guild data request
+              console.error('Error in user or guild data request:', error);
+              throw error; // Rethrow the error to propagate it further if needed
+            })
+          );
         }),
         catchError((error) => {
-          console.error('OAuth2 callback error:', error);
-          // Handle errors
-          // Redirect to an error page or display an error message
-          throw error;
+          // Handle errors in the token request
+          console.error('Error in token request:', error);
+          throw error; // Rethrow the error to propagate it further if needed
         })
       )
-      .subscribe(() => {
-        // Optionally, fetch user data
-        // this.fetchUserData();
-        // Redirect to the desired route (e.g., user profile)
-        // this.router.navigate(['/landing-page']);
+      .subscribe((userInfo: any) => {
+        console.log('userInfo', userInfo);
+        // Now, you have access to authInfo, which contains accessToken, username, and guildData
+        // You can navigate to the desired route with this information
+        const navigationExtras: NavigationExtras = {
+          state: { userInfo },
+        };
+        const userID = userInfo.userData.id;
+        this.router.navigate([''], navigationExtras)
+        // this.router.navigate(['timeline'], navigationExtras);
       });
   }
 

@@ -1,0 +1,13 @@
+<!-- <app-nav-menu></app-nav-menu> -->
+<nav>Profile | Settings</nav>
+
+<!-- <app-tab-interface></app-tab-interface> -->
+<nav>Chronological | Tailored</nav>
+
+<div class="message-container">
+	<p>messages</p>
+	<!-- <app-message *ngFor="let message of messages"></app-message> -->
+	<div *ngFor="let message of messages">
+		<p>{{ message }}</p>
+	</div>
+</div>
