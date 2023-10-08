@@ -9,6 +9,11 @@
       "type": "build"
     },
     {
+      "name": "@types/node-fetch",
+      "version": "2",
+      "type": "build"
+    },
+    {
       "name": "@types/node",
       "version": "^16",
       "type": "build"
@@ -116,6 +121,11 @@
     },
     {
       "name": "express",
+      "type": "runtime"
+    },
+    {
+      "name": "node-fetch",
+      "version": "2",
       "type": "runtime"
     }
   ],

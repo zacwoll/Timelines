@@ -4,9 +4,10 @@ import cookie from "cookie";
 import { Client, GatewayIntentBits } from "discord.js";
 import express from "express";
 import { Response } from "express-serve-static-core";
+import fetch from "node-fetch";
 const app = express();
 const port = 3000;
-
+import "dotenv/config";
 // Configure the options object
 const options = {
   intents: [
@@ -31,9 +32,10 @@ app.get("/auth/callback", async (req, res) => {
   console.log("Visitor at /auth/callback");
   try {
     const code = req.query.code?.toString() || ""; // Get the 'code' query parameter from the request
-    const redirect_uri = "localhost:3000/auth/set_cookies";
+    const redirect_uri = "http://localhost:3000/auth/callback";
     const client_id = process.env.CLIENT_ID || "";
     const client_secret = process.env.CLIENT_SECRET || "";
+    console.log("Data Check", redirect_uri, client_id, client_secret, code);
     if (client_id === "" || client_secret === "") {
       console.log("No ENV detected");
       res.status(500).send("Internal Server Error");
@@ -55,6 +57,7 @@ app.get("/auth/callback", async (req, res) => {
         client_secret, // Retrieve client secret from environment variable
       }),
     });
+
     if (response.ok) {
       const data = await response.json();
       // @ts-ignore
@@ -79,6 +82,7 @@ app.get("/auth/callback", async (req, res) => {
         response.status,
         response.statusText,
       );
+      console.log(await response.json());
       res.status(500).send("Internal Server Error");
     }
   } catch (error) {

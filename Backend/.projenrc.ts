@@ -10,7 +10,7 @@ import { TypeScriptAppProject } from "projen/lib/typescript";
 
 const project = new TypeScriptAppProject({
   defaultReleaseBranch: "main",
-  name: "DiscordClient",
+  name: "Backend",
   projenrcTs: true,
   srcdir: ".",
   deps: [
@@ -19,6 +19,7 @@ const project = new TypeScriptAppProject({
     "axios",
     "discord.js",
     "express",
+    "node-fetch@2",
     "@types/express",
     "@types/express-serve-static-core",
   ],
@@ -32,6 +33,7 @@ const project = new TypeScriptAppProject({
     "eslint-config-prettier", // Prettier ESLint config to avoid conflicts with ESLint
     "eslint-plugin-prettier", // Runs Prettier as an ESLint rule
     "@types/cookie",
+    "@types/node-fetch@2",
   ],
   packageManager: NodePackageManager.NPM, // use npm as the package manager
   eslint: true,
@@ -60,7 +62,7 @@ const project = new TypeScriptAppProject({
   tsconfig: {
     compilerOptions: {
       target: "ES2022",
-      module: "commonjs",
+      module: "commonjs", //commonjs
       lib: ["ESNext"],
       rootDir: ".",
       strict: true,
@@ -99,6 +101,8 @@ const project = new TypeScriptAppProject({
   },
   gitignore: [".env"],
 });
+
+// project.package.addField("type", "module");
 
 // const precompileTask = project.tasks.tryFind('pre-compile') || project.addTask('pre-compile');
 
