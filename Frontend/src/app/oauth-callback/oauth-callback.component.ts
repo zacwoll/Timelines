@@ -13,6 +13,7 @@ export class OAuthCallbackComponent implements OnInit {
     private authService: AuthService
   ) {}
 
+  // subscribe to the route's Query Params to get the 'code' from Discord OAuth2
   ngOnInit(): void {
     this.route.queryParams.subscribe((queryParams) => {
       const code = queryParams['code'];
