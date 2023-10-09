@@ -1,8 +1,11 @@
 {
 	"cSpell.words": [
 		"ASNEEDED",
+		"cobertura",
 		"devdirs",
 		"IIFE",
+		"lcov",
 		"srcdir"
-	]
+	],
+	"editor.formatOnSave": true
 }

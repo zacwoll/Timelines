@@ -28,6 +28,7 @@ const discordClient = new Client(options);
 // Middleware to parse JSON request bodies
 app.use(express.json());
 
+// Endpoint to receive auth callbacks and install cookies
 app.get("/auth/callback", async (req, res) => {
   console.log("Visitor at /auth/callback");
   try {
@@ -75,7 +76,7 @@ app.get("/auth/callback", async (req, res) => {
         }),
       ]);
 
-      res.status(200).send("Authentication successful");
+      res.status(200).redirect("http://localhost:4200");
     } else {
       console.error(
         "Error exchanging code for token:",
@@ -88,6 +89,41 @@ app.get("/auth/callback", async (req, res) => {
   } catch (error) {
     console.error("Error handling authentication callback:", error);
     res.status(500).send("Internal Server Error");
+  }
+});
+
+// Endpoint to verify cookie or refresh cookie
+app.get("auth/check_cookie", async (req, res) => {
+  console.log("Is your cookie okay?");
+  try {
+    const { access_token, refresh_token } = req.cookies;
+    if (!access_token || !refresh_token) {
+      console.error("Error, Cookie not found");
+      res.send(400).send("Cookies not found");
+    }
+
+    const response = await fetch("https://discord.com/api/v10/users/@me", {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+      },
+    });
+
+    if (response.ok) {
+      const userData = await response.json();
+      console.log("User data:", userData);
+      res.status(200).json(userData);
+    } else {
+      console.error(
+        "Error verifying token:",
+        response.status,
+        response.statusText,
+      );
+      res.status(401).send("Unauthorized");
+    }
+  } catch (error) {
+    console.error("Error handling check_cookie: ", error);
+    res.send(500).send("Internal server error");
   }
 });
 
