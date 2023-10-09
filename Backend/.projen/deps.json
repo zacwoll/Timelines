@@ -5,6 +5,14 @@
       "type": "build"
     },
     {
+      "name": "@types/cookie-parser",
+      "type": "build"
+    },
+    {
+      "name": "@types/cors",
+      "type": "build"
+    },
+    {
       "name": "@types/jest",
       "type": "build"
     },
@@ -109,6 +117,14 @@
     },
     {
       "name": "cookie",
+      "type": "runtime"
+    },
+    {
+      "name": "cookie-parser",
+      "type": "runtime"
+    },
+    {
+      "name": "cors",
       "type": "runtime"
     },
     {

@@ -1,9 +1,10 @@
 // It's that time of year again. The time of year I create a random server class and build some bullshit that I eventually forget lmao!
 
 import cookie from "cookie";
+import cookieParser from "cookie-parser";
+import cors from "cors";
 import { Client, GatewayIntentBits } from "discord.js";
 import express from "express";
-import { Response } from "express-serve-static-core";
 import fetch from "node-fetch";
 const app = express();
 const port = 3000;
@@ -27,6 +28,15 @@ const discordClient = new Client(options);
 
 // Middleware to parse JSON request bodies
 app.use(express.json());
+// configure cors to accept requests from FE
+app.use(
+  cors({
+    origin: "http://localhost:4200",
+    credentials: true,
+  }),
+);
+// app.use(cors());
+app.use(cookieParser());
 
 // Endpoint to receive auth callbacks and install cookies
 app.get("/auth/callback", async (req, res) => {
@@ -36,7 +46,6 @@ app.get("/auth/callback", async (req, res) => {
     const redirect_uri = "http://localhost:3000/auth/callback";
     const client_id = process.env.CLIENT_ID || "";
     const client_secret = process.env.CLIENT_SECRET || "";
-    console.log("Data Check", redirect_uri, client_id, client_secret, code);
     if (client_id === "" || client_secret === "") {
       console.log("No ENV detected");
       res.status(500).send("Internal Server Error");
@@ -61,19 +70,27 @@ app.get("/auth/callback", async (req, res) => {
 
     if (response.ok) {
       const data = await response.json();
+      console.log(data);
       // @ts-ignore
       const { access_token, token_type, expires_in, refresh_token } = data;
       // Set the access token in a cookie
       res.setHeader("Set-Cookie", [
         cookie.serialize("access_token", access_token, {
           httpOnly: true,
+          sameSite: "none",
+          secure: false,
         }),
         cookie.serialize("refresh_token", refresh_token, {
           httpOnly: true,
+          sameSite: "none",
+          secure: false,
         }),
         cookie.serialize("expires_in", expires_in, {
           httpOnly: true,
+          sameSite: "none",
+          secure: false,
         }),
+        cookie.serialize("foo", "foo"),
       ]);
 
       res.status(200).redirect("http://localhost:4200");
@@ -93,15 +110,22 @@ app.get("/auth/callback", async (req, res) => {
 });
 
 // Endpoint to verify cookie or refresh cookie
-app.get("auth/check_cookie", async (req, res) => {
-  console.log("Is your cookie okay?");
+app.get("/auth/check_cookie", async (req, res) => {
+  console.log("Visitor at /auth/check_cookie");
   try {
     const { access_token, refresh_token } = req.cookies;
+    console.log("cookies", req.cookies);
     if (!access_token || !refresh_token) {
       console.error("Error, Cookie not found");
-      res.send(400).send("Cookies not found");
+      res.status(400).send("Cookies not found");
+      return;
     }
 
+    // try {
+
+    // } catch (error) {
+
+    // }
     const response = await fetch("https://discord.com/api/v10/users/@me", {
       method: "GET",
       headers: {
@@ -111,7 +135,7 @@ app.get("auth/check_cookie", async (req, res) => {
 
     if (response.ok) {
       const userData = await response.json();
-      console.log("User data:", userData);
+      console.log("https://discord.com/api/v10/users/@me", userData);
       res.status(200).json(userData);
     } else {
       console.error(
@@ -119,11 +143,11 @@ app.get("auth/check_cookie", async (req, res) => {
         response.status,
         response.statusText,
       );
-      res.status(401).send("Unauthorized");
+      res.sendStatus(401).send("Unauthorized");
     }
   } catch (error) {
     console.error("Error handling check_cookie: ", error);
-    res.send(500).send("Internal server error");
+    res.sendStatus(500).send("Internal server error");
   }
 });
 
@@ -139,70 +163,12 @@ app.post("/streaming/launch", (req, res) => {
     .login(accessToken)
     .then(() => {
       // Once the client is logged in, retrieve guild message data, process it, and stream it back
-      void retrieveAndProcessData(accessToken, res);
     })
     .catch((error) => {
       console.error("Discord.js login failed:", error);
       res.status(500).json({ error: "Discord.js login failed" });
     });
 });
-
-// Function to retrieve and process data
-async function retrieveAndProcessData(
-  // @ts-ignore
-  accessToken: string,
-  response: Response<any, Record<string, any>, number>,
-) {
-  try {
-    // Gather data from user's guilds using Discord.js
-    const guildData = await gatherGuildData();
-
-    // Process the gathered data (replace with your processing logic)
-    const processedData = processGuildData(guildData);
-
-    // Stream processed data back to the user
-    // This part depends on how you want to stream data back to the user
-    // You might consider using WebSockets or another real-time communication method
-
-    // For simplicity, we'll send back a JSON response
-    response.json({
-      message: "Data streaming initiated successfully",
-      data: processedData,
-    });
-  } catch (error) {
-    console.error("Error retrieving or processing data:", error);
-    response.status(500).json({ error: "Error retrieving or processing data" });
-  }
-}
-
-type GuildData = {
-  [guildId: string]: any;
-};
-
-// Function to gather data from user's guilds using Discord.js
-async function gatherGuildData() {
-  const allGuildData: GuildData = {};
-
-  // Iterate through the guilds where the bot is a member
-  for (const guild of discordClient.guilds.cache.values()) {
-    const guildData = guild;
-    // Retrieve and store data from each guild (e.g., latest messages, member data, etc.)
-    // Add your logic here to gather the necessary data
-    // You can use guild.channels, guild.members, etc. to access guild data
-    allGuildData[guild.id] = guildData;
-  }
-
-  return allGuildData;
-}
-
-// Function to process gathered guild data (replace with your processing logic)
-function processGuildData(
-  // @ts-ignore
-  guildData: any,
-) {
-  // Replace this with your processing logic
-  return /* Processed data */;
-}
 
 // Start the Express server
 app.listen(port, () => {

@@ -15,6 +15,8 @@ const project = new TypeScriptAppProject({
   srcdir: ".",
   deps: [
     "cookie",
+    "cookie-parser",
+    "cors",
     "dotenv", // environment variables
     "axios",
     "discord.js",
@@ -33,7 +35,9 @@ const project = new TypeScriptAppProject({
     "eslint-config-prettier", // Prettier ESLint config to avoid conflicts with ESLint
     "eslint-plugin-prettier", // Runs Prettier as an ESLint rule
     "@types/cookie",
+    "@types/cors",
     "@types/node-fetch@2",
+    "@types/cookie-parser",
   ],
   packageManager: NodePackageManager.NPM, // use npm as the package manager
   eslint: true,

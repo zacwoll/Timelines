@@ -21,14 +21,25 @@ import { Observable } from 'rxjs';
 export class AuthService {
   constructor(private http: HttpClient) {}
 
-  // Verify the token at 'localhost:3000/api/check_cookie'
+  // Verify the token at 'localhost:3000/auth/check_cookie'
   verifyToken(): Observable<boolean> {
-    return this.http.get<{ authenticated: boolean }>(
-      'http://localhost:3000/api/check_cookie'
-    ).pipe(
-      map(response => response.authenticated),
-      catchError(() => of(false)) // Handle network errors or other errors
-    );
+    console.log('Verify me token');
+    return this.http
+      .get<any>('http://localhost:3000/auth/check_cookie', {
+        withCredentials: true,
+      })
+      .pipe(
+        map((response) => {
+          console.log('User Data: ', response);
+          if (response) {
+            return true;
+          } else {
+            console.log('No response from API');
+            return false;
+          }
+        }),
+        catchError(() => of(false)) // Handle network errors or other errors
+      );
   }
 }
 
