@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { WebSocketSubject, webSocket } from 'rxjs/webSocket';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
+import { AuthService } from '../auth.service';
 
 @Component({
   selector: 'app-home',
@@ -12,12 +13,14 @@ export class HomeComponent implements OnInit, OnDestroy {
   private webSocketSubject: WebSocketSubject<any>;
   messages: any[] = [];
   private destroy$: Subject<void> = new Subject<void>();
+  public primaryUser: any;
 
-  constructor() {
+  constructor(private authService: AuthService) {
     this.webSocketSubject = webSocket('ws://your-websocket-url.com');
   }
 
   ngOnInit(): void {
+    this.primaryUser = this.authService.authenticatedUser;
     this.webSocketSubject
       .asObservable()
       .pipe(takeUntil(this.destroy$))

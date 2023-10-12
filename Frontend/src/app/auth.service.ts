@@ -19,11 +19,12 @@ import { Observable } from 'rxjs';
   providedIn: 'root',
 })
 export class AuthService {
+  // @ts-ignore
+  public authenticatedUser;
   constructor(private http: HttpClient) {}
 
   // Verify the token at 'localhost:3000/auth/check_cookie'
   verifyToken(): Observable<boolean> {
-    console.log('Verify me token');
     return this.http
       .get<any>('http://localhost:3000/auth/check_cookie', {
         withCredentials: true,
@@ -31,6 +32,7 @@ export class AuthService {
       .pipe(
         map((response) => {
           console.log('User Data: ', response);
+          this.authenticatedUser = response;
           if (response) {
             return true;
           } else {
