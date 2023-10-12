@@ -1,5 +1,3 @@
-// It's that time of year again. The time of year I create a random server class and build some bullshit that I eventually forget lmao!
-
 import cookie from "cookie";
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -9,7 +7,10 @@ import fetch from "node-fetch";
 const app = express();
 const port = 3000;
 import "dotenv/config";
-// Configure the options object
+
+const { CLIENT_ID, CLIENT_SECRET } = process.env;
+
+// Configure the client options object
 const options = {
   intents: [
     GatewayIntentBits.Guilds,
@@ -44,8 +45,8 @@ app.get("/auth/callback", async (req, res) => {
   try {
     const code = req.query.code?.toString() || ""; // Get the 'code' query parameter from the request
     const redirect_uri = "http://localhost:3000/auth/callback";
-    const client_id = process.env.CLIENT_ID || "";
-    const client_secret = process.env.CLIENT_SECRET || "";
+    const client_id = CLIENT_ID || "";
+    const client_secret = CLIENT_SECRET || "";
     if (client_id === "" || client_secret === "") {
       console.log("No ENV detected");
       res.status(500).send("Internal Server Error");
@@ -74,23 +75,18 @@ app.get("/auth/callback", async (req, res) => {
       // @ts-ignore
       const { access_token, token_type, expires_in, refresh_token } = data;
       // Set the access token in a cookie
+      // secure: false => true when HTTP is upgraded to HTTPS
       res.setHeader("Set-Cookie", [
         cookie.serialize("access_token", access_token, {
           httpOnly: true,
-          sameSite: "none",
           secure: false,
+          maxAge: expires_in,
         }),
         cookie.serialize("refresh_token", refresh_token, {
           httpOnly: true,
-          sameSite: "none",
           secure: false,
+          maxAge: expires_in,
         }),
-        cookie.serialize("expires_in", expires_in, {
-          httpOnly: true,
-          sameSite: "none",
-          secure: false,
-        }),
-        cookie.serialize("foo", "foo"),
       ]);
 
       res.status(200).redirect("http://localhost:4200");
@@ -121,28 +117,64 @@ app.get("/auth/check_cookie", async (req, res) => {
       return;
     }
 
-    // try {
+    try {
+      // Verify Token
+      const response = await fetch("https://discord.com/api/v10/users/@me", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+        },
+      });
 
-    // } catch (error) {
-
-    // }
-    const response = await fetch("https://discord.com/api/v10/users/@me", {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${access_token}`,
-      },
-    });
-
-    if (response.ok) {
-      const userData = await response.json();
-      console.log("https://discord.com/api/v10/users/@me", userData);
-      res.status(200).json(userData);
-    } else {
-      console.error(
-        "Error verifying token:",
-        response.status,
-        response.statusText,
-      );
+      if (response.ok) {
+        const userData = await response.json();
+        console.log("https://discord.com/api/v10/users/@me", userData);
+        try {
+          // Perform token refresh (whether it expires or not)
+          const refreshResponse = await fetch(
+            "https://discord.com/api/v10/oauth2/token/refresh",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+              body: new URLSearchParams({
+                grant_type: "refresh_token",
+                refresh_token,
+                client_id: CLIENT_ID || "", // Retrieve client ID from environment variable
+                client_secret: CLIENT_SECRET || "", // Retrieve client secret from environment variable
+              }),
+            },
+          );
+          if (refreshResponse.ok) {
+            const refreshData = await refreshResponse.json();
+            // Set the access token in a cookie
+            // secure: false => true when HTTP is upgraded to HTTPS
+            res.setHeader("Set-Cookie", [
+              cookie.serialize("access_token", refreshData.access_token, {
+                httpOnly: true,
+                secure: false,
+                maxAge: refreshData.expires_in,
+              }),
+              cookie.serialize("refresh_token", refresh_token, {
+                httpOnly: true,
+                secure: false,
+                maxAge: refreshData.expires_in,
+              }),
+            ]);
+          }
+        } catch (error) {
+          console.error(
+            "Error Refreshing Token:",
+            response.status,
+            response.statusText,
+          );
+        }
+        res.status(200).json(userData);
+        return;
+      }
+    } catch (error) {
+      console.error("Error verifying token:");
       res.sendStatus(401).send("Unauthorized");
     }
   } catch (error) {
