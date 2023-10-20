@@ -27,6 +27,10 @@
       "type": "build"
     },
     {
+      "name": "@types/socket.io",
+      "type": "build"
+    },
+    {
       "name": "@types/supertest",
       "type": "build"
     },
@@ -140,8 +144,28 @@
       "type": "runtime"
     },
     {
+      "name": "fs",
+      "type": "runtime"
+    },
+    {
+      "name": "http",
+      "type": "runtime"
+    },
+    {
+      "name": "https",
+      "type": "runtime"
+    },
+    {
       "name": "node-fetch",
       "version": "2",
+      "type": "runtime"
+    },
+    {
+      "name": "path",
+      "type": "runtime"
+    },
+    {
+      "name": "socket.io",
       "type": "runtime"
     }
   ],

@@ -26,7 +26,7 @@ export class AuthService {
   // Verify the token at 'localhost:3000/auth/check_cookie'
   verifyToken(): Observable<boolean> {
     return this.http
-      .get<any>('http://localhost:3000/auth/check_cookie', {
+      .get<any>('https://localhost:3000/auth/check_cookie', {
         withCredentials: true,
       })
       .pipe(

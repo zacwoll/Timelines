@@ -1,11 +1,15 @@
+import fs from "fs";
+// import http from "http";
+import https from "https";
+import path from "path";
 import cookie from "cookie";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import { Client, GatewayIntentBits } from "discord.js";
 import express from "express";
 import fetch from "node-fetch";
-const app = express();
-const port = 3000;
+import { Server } from "socket.io";
+
 import "dotenv/config";
 
 const { CLIENT_ID, CLIENT_SECRET } = process.env;
@@ -27,6 +31,11 @@ const options = {
 // Create a Discord.js client
 const discordClient = new Client(options);
 
+// Express Logic section
+// app handles the construction of the API server and the websocket server
+const app = express();
+const port = 3000;
+
 // Middleware to parse JSON request bodies
 app.use(express.json());
 // configure cors to accept requests from FE
@@ -44,7 +53,7 @@ app.get("/auth/callback", async (req, res) => {
   console.log("Visitor at /auth/callback");
   try {
     const code = req.query.code?.toString() || ""; // Get the 'code' query parameter from the request
-    const redirect_uri = "http://localhost:3000/auth/callback";
+    const redirect_uri = "https://localhost:3000/auth/callback";
     const client_id = CLIENT_ID || "";
     const client_secret = CLIENT_SECRET || "";
     if (client_id === "" || client_secret === "") {
@@ -117,6 +126,8 @@ app.get("/auth/check_cookie", async (req, res) => {
       return;
     }
 
+    // Send request to users/@me to verify token
+    // Once verified, refresh the token
     try {
       // Verify Token
       const response = await fetch("https://discord.com/api/v10/users/@me", {
@@ -156,7 +167,7 @@ app.get("/auth/check_cookie", async (req, res) => {
                 secure: false,
                 maxAge: refreshData.expires_in,
               }),
-              cookie.serialize("refresh_token", refresh_token, {
+              cookie.serialize("refresh_token", refreshData.refresh_token, {
                 httpOnly: true,
                 secure: false,
                 maxAge: refreshData.expires_in,
@@ -183,26 +194,91 @@ app.get("/auth/check_cookie", async (req, res) => {
   }
 });
 
-// Endpoint to launch data streaming
-app.post("/streaming/launch", (req, res) => {
-  // Retrieve the access token from the request
-  const { accessToken } = req.body;
+app.post("/streaming/launch", async (req, res) => {
+  try {
+    // Retrieve the access token from the request
+    const { accessToken } = req.body;
 
-  // Verify the access token if needed (e.g., by making a request to Discord's API)
+    // Check cookie at /auth/check_cookie
+    const checkCookieResponse = await fetch(
+      "https://localhost:3000/auth/check_cookie",
+    );
 
-  // Log in the Discord.js client with the access token
-  discordClient
-    .login(accessToken)
-    .then(() => {
+    if (checkCookieResponse.ok) {
+      // If the check is successful, proceed to log in the Discord.js client
+      await discordClient.login(accessToken);
+
       // Once the client is logged in, retrieve guild message data, process it, and stream it back
-    })
-    .catch((error) => {
-      console.error("Discord.js login failed:", error);
-      res.status(500).json({ error: "Discord.js login failed" });
-    });
+      // Insert your guild data retrieval and processing logic here
+
+      res.status(200).send("Discord.js client logged in successfully");
+    } else {
+      // If the check fails, respond with an error
+      res.status(401).send("Cookie check failed");
+    }
+  } catch (error) {
+    console.error("Error checking cookie or logging in:", error);
+    res.status(500).send("Cookie check or login failed");
+  }
 });
+
+// Setup certificate for server
+const certDir = path.join(__dirname, "../../certs"); // Go up one level to the 'certs' directory
+const certificatePath = path.join(certDir, "server-cert.pem");
+const privateKeyPath = path.join(certDir, "server-key.pem");
 
 // Start the Express server
-app.listen(port, () => {
-  console.log(`Express server is running on port ${port}`);
+const httpsOptions = {
+  key: fs.readFileSync(privateKeyPath),
+  cert: fs.readFileSync(certificatePath),
+};
+
+const server = https.createServer(httpsOptions, app);
+
+// Websocket Logic section
+// websocket will use the same port as Express server and initializes on top of it.
+// websocket activates when an HTTP request is read as a Websocket request and switches to the websocket server.
+
+// const server = https.createServer(httpsOptions, app);
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:4200",
+    credentials: true,
+  },
 });
+
+// Define a connection event handler for Socket.IO
+io.on("connection", (socket) => {
+  console.log("A user connected");
+
+  // Send a system message to the connected user
+  socket.emit("system_message", "Welcome to the server");
+
+  // Create logic for creating data and send it here
+
+  // Handle receiving data from the client
+  socket.on("client_data", (data) => {
+    console.log("Received data from the client:", data);
+    // You can process the received data here and send a response if needed
+    socket.emit("server_response", "Data received on the server");
+  });
+
+  // Handle user disconnection
+  socket.on("disconnect", () => {
+    console.log("A user disconnected");
+  });
+});
+
+server.listen(port, () => {
+  console.log(`Express & Websocket server is running on port ${port}`);
+});
+
+// async function checkCookieValidation() {
+//   try {
+//     const response = await fetch("https://localhost:3000/auth/check_cookie");
+//     return response;
+//   } catch (error) {
+//     console.error("Error checking cookie validation:", error);
+//     throw error; // You can handle the error as needed
+//   }
+// }

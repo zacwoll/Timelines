@@ -162,13 +162,13 @@
           "exec": "npm update npm-check-updates"
         },
         {
-          "exec": "npm-check-updates --upgrade --target=minor --peer --dep=dev,peer,prod,optional --filter=@types/cookie,@types/cookie-parser,@types/cors,@types/jest,@types/node,@types/supertest,@typescript-eslint/eslint-plugin,@typescript-eslint/parser,eslint-config-prettier,eslint-import-resolver-node,eslint-import-resolver-typescript,eslint-plugin-import,eslint-plugin-prettier,eslint,jest,jest-junit,npm-check-updates,prettier,projen,supertest,ts-jest,ts-node,typescript,@types/express,@types/express-serve-static-core,axios,cookie,cookie-parser,cors,discord.js,dotenv,express"
+          "exec": "npm-check-updates --upgrade --target=minor --peer --dep=dev,peer,prod,optional --filter=@types/cookie,@types/cookie-parser,@types/cors,@types/jest,@types/node,@types/socket.io,@types/supertest,@typescript-eslint/eslint-plugin,@typescript-eslint/parser,eslint-config-prettier,eslint-import-resolver-node,eslint-import-resolver-typescript,eslint-plugin-import,eslint-plugin-prettier,eslint,jest,jest-junit,npm-check-updates,prettier,projen,supertest,ts-jest,ts-node,typescript,@types/express,@types/express-serve-static-core,axios,cookie,cookie-parser,cors,discord.js,dotenv,express,fs,http,https,path,socket.io"
         },
         {
           "exec": "npm install"
         },
         {
-          "exec": "npm update @types/cookie @types/cookie-parser @types/cors @types/jest @types/node @types/supertest @typescript-eslint/eslint-plugin @typescript-eslint/parser eslint-config-prettier eslint-import-resolver-node eslint-import-resolver-typescript eslint-plugin-import eslint-plugin-prettier eslint jest jest-junit npm-check-updates prettier projen supertest ts-jest ts-node typescript @types/express @types/express-serve-static-core axios cookie cookie-parser cors discord.js dotenv express"
+          "exec": "npm update @types/cookie @types/cookie-parser @types/cors @types/jest @types/node @types/socket.io @types/supertest @typescript-eslint/eslint-plugin @typescript-eslint/parser eslint-config-prettier eslint-import-resolver-node eslint-import-resolver-typescript eslint-plugin-import eslint-plugin-prettier eslint jest jest-junit npm-check-updates prettier projen supertest ts-jest ts-node typescript @types/express @types/express-serve-static-core axios cookie cookie-parser cors discord.js dotenv express fs http https path socket.io"
         },
         {
           "exec": "npx projen"

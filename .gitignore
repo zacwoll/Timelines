@@ -4,3 +4,6 @@ Frontend/src/environments
 Frontend/src/environments/environment.ts
 */node_modules
 Frontend/src/environments/environment.ts
+Backend/certs/server-cert.pem
+Backend/certs/server-csr.pem
+Backend/certs/server-key.pem

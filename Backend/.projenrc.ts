@@ -18,10 +18,15 @@ const project = new TypeScriptAppProject({
     "cookie-parser",
     "cors",
     "dotenv", // environment variables
+    "socket.io",
     "axios",
     "discord.js",
     "express",
+    "http",
+    "https",
+    "fs",
     "node-fetch@2",
+    "path",
     "@types/express",
     "@types/express-serve-static-core",
   ],
@@ -38,6 +43,7 @@ const project = new TypeScriptAppProject({
     "@types/cors",
     "@types/node-fetch@2",
     "@types/cookie-parser",
+    "@types/socket.io",
   ],
   packageManager: NodePackageManager.NPM, // use npm as the package manager
   eslint: true,
