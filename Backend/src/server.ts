@@ -4,7 +4,7 @@ import path from "path";
 import cookie from "cookie";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import { Client, GatewayIntentBits } from "discord.js";
+import { GatewayIntentBits } from "discord.js";
 import express from "express";
 import fetch from "node-fetch";
 import { Server } from "socket.io";
@@ -14,6 +14,7 @@ import "dotenv/config";
 const { CLIENT_ID, CLIENT_SECRET } = process.env;
 
 // Configure the client options object
+// @ts-ignore
 const options = {
   intents: [
     GatewayIntentBits.Guilds,
