@@ -4,6 +4,7 @@ import { WebSocketSubject, webSocket } from 'rxjs/webSocket';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { AuthService } from '../auth.service';
+import { WebsocketService } from '../websocket.service';
 // import { WebsocketService } from '../websocket.service';
 
 @Component({
@@ -17,11 +18,13 @@ export class HomeComponent implements OnInit, OnDestroy {
   public primaryUser: any;
 
   constructor(
-    private authService: AuthService // private websocketService: WebsocketService
+    private authService: AuthService,
+    private websocketService: WebsocketService
   ) {}
 
   ngOnInit(): void {
     this.primaryUser = this.authService.authenticatedUser;
+    // this.websocketService.subscribe('initial');
   }
 
   ngOnDestroy(): void {
