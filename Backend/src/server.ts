@@ -1,5 +1,4 @@
 import fs from "fs";
-// import http from "http";
 import https from "https";
 import path from "path";
 import cookie from "cookie";
@@ -27,9 +26,6 @@ const options = {
     GatewayIntentBits.MessageContent,
   ],
 };
-
-// Create a Discord.js client
-const discordClient = new Client(options);
 
 // Express Logic section
 // app handles the construction of the API server and the websocket server
@@ -81,6 +77,12 @@ app.get("/auth/callback", async (req, res) => {
     if (response.ok) {
       const data = await response.json();
       console.log(data);
+      // try {
+      //   const testClient = new Client(options);
+      //   await testClient.login(data.access_token);
+      // } catch (error) {
+      //   console.log("Testing client login at first token", error);
+      // }
       // @ts-ignore
       const { access_token, token_type, expires_in, refresh_token } = data;
       // Set the access token in a cookie
@@ -88,13 +90,15 @@ app.get("/auth/callback", async (req, res) => {
       res.setHeader("Set-Cookie", [
         cookie.serialize("access_token", access_token, {
           httpOnly: true,
-          secure: false,
+          secure: true,
           maxAge: expires_in,
+          path: "/",
         }),
         cookie.serialize("refresh_token", refresh_token, {
           httpOnly: true,
-          secure: false,
+          secure: true,
           maxAge: expires_in,
+          path: "/",
         }),
       ]);
 
@@ -143,7 +147,7 @@ app.get("/auth/check_cookie", async (req, res) => {
         try {
           // Perform token refresh (whether it expires or not)
           const refreshResponse = await fetch(
-            "https://discord.com/api/v10/oauth2/token/refresh",
+            "https://discord.com/api/v10/oauth2/token",
             {
               method: "POST",
               headers: {
@@ -159,20 +163,27 @@ app.get("/auth/check_cookie", async (req, res) => {
           );
           if (refreshResponse.ok) {
             const refreshData = await refreshResponse.json();
+            console.log("Refreshed Data", refreshData);
             // Set the access token in a cookie
             // secure: false => true when HTTP is upgraded to HTTPS
             res.setHeader("Set-Cookie", [
               cookie.serialize("access_token", refreshData.access_token, {
                 httpOnly: true,
-                secure: false,
+                secure: true,
                 maxAge: refreshData.expires_in,
+                path: "/",
               }),
               cookie.serialize("refresh_token", refreshData.refresh_token, {
                 httpOnly: true,
-                secure: false,
+                secure: true,
                 maxAge: refreshData.expires_in,
+                path: "/",
               }),
             ]);
+          } else {
+            throw new Error(
+              `Failed to Refresh Token: ${refreshResponse.statusText}`,
+            );
           }
         } catch (error) {
           console.error(
@@ -191,34 +202,6 @@ app.get("/auth/check_cookie", async (req, res) => {
   } catch (error) {
     console.error("Error handling check_cookie: ", error);
     res.sendStatus(500).send("Internal server error");
-  }
-});
-
-app.post("/streaming/launch", async (req, res) => {
-  try {
-    // Retrieve the access token from the request
-    const { accessToken } = req.body;
-
-    // Check cookie at /auth/check_cookie
-    const checkCookieResponse = await fetch(
-      "https://localhost:3000/auth/check_cookie",
-    );
-
-    if (checkCookieResponse.ok) {
-      // If the check is successful, proceed to log in the Discord.js client
-      await discordClient.login(accessToken);
-
-      // Once the client is logged in, retrieve guild message data, process it, and stream it back
-      // Insert your guild data retrieval and processing logic here
-
-      res.status(200).send("Discord.js client logged in successfully");
-    } else {
-      // If the check fails, respond with an error
-      res.status(401).send("Cookie check failed");
-    }
-  } catch (error) {
-    console.error("Error checking cookie or logging in:", error);
-    res.status(500).send("Cookie check or login failed");
   }
 });
 
@@ -245,40 +228,68 @@ const io = new Server(server, {
     origin: "http://localhost:4200",
     credentials: true,
   },
+  cookie: true,
 });
 
-// Define a connection event handler for Socket.IO
-io.on("connection", (socket) => {
-  console.log("A user connected");
+// Custom Module declaration used for declarative merging used for including the access_token to the object.
+declare module "socket.io" {
+  interface Socket {
+    access_token: string;
+  }
+}
+io.use(async (socket, next) => {
+  console.log("Socket Connection request", socket.id);
+  const cookies = cookie.parse(socket.request.headers.cookie || "");
+  console.log(`Socket ${socket.id} cookies`, cookies);
+  const access_token = cookies.access_token || "";
+  if (access_token === "") {
+    console.log("Socket access token is not present");
+    socket.emit("invalid_access_token", "Access token not present");
+    return;
+  } else {
+    socket.access_token = access_token;
+  }
 
-  // Send a system message to the connected user
-  socket.emit("system_message", "Welcome to the server");
-
-  // Create logic for creating data and send it here
-
-  // Handle receiving data from the client
-  socket.on("client_data", (data) => {
-    console.log("Received data from the client:", data);
-    // You can process the received data here and send a response if needed
-    socket.emit("server_response", "Data received on the server");
-  });
-
-  // Handle user disconnection
-  socket.on("disconnect", () => {
-    console.log("A user disconnected");
-  });
+  // Initiate log in
+  try {
+    console.log("Discord Client logging in", access_token);
+    return next();
+  } catch (error) {
+    console.log("Discord Client failed login", error);
+    socket.emit("invalid_access_token", "Access token is invalid");
+    return;
+  }
 });
+
+// // Define a connection event handler for Socket.IO
+// io.on("connection", (socket) => {
+//   console.log(socket.request.headers);
+//   const cookies = cookie.parse(socket.request.headers.cookie || "");
+//   const access_token = cookies.access_token || "";
+
+//   console.log("socket cookies", cookies, access_token);
+
+//   // Send a system message to the connected user
+//   socket.emit(
+//     "system_message",
+//     `Welcome to the server ${socket.conn.transport.name}`,
+//   );
+
+//   // Create logic for creating data and send it here
+
+//   // Handle receiving data from the client
+//   socket.on("client_data", (data) => {
+//     console.log("Received data from the client:", data);
+//     // You can process the received data here and send a response if needed
+//     socket.emit("server_response", "Data received on the server");
+//   });
+
+//   // Handle user disconnection
+//   socket.on("disconnect", () => {
+//     console.log("A user disconnected");
+//   });
+// });
 
 server.listen(port, () => {
   console.log(`Express & Websocket server is running on port ${port}`);
 });
-
-// async function checkCookieValidation() {
-//   try {
-//     const response = await fetch("https://localhost:3000/auth/check_cookie");
-//     return response;
-//   } catch (error) {
-//     console.error("Error checking cookie validation:", error);
-//     throw error; // You can handle the error as needed
-//   }
-// }
