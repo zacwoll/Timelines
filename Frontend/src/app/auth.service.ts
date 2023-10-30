@@ -24,7 +24,24 @@ export class AuthService {
   constructor(private http: HttpClient) {}
 
   // Verify the token at 'localhost:3000/auth/check_cookie'
-  verifyToken(): Observable<boolean> {
+  // TODO: the response is a User Object containing this code
+  //   https://discord.com/api/v10/users/@me {
+  //   id: '165579137182990337',
+  //   username: '_zigi',
+  //   avatar: '506772939a3950d92ad0fdd47adb69c2',
+  //   discriminator: '0',
+  //   public_flags: 576,
+  //   premium_type: 1,
+  //   flags: 576,
+  //   banner: null,
+  //   accent_color: 16743386,
+  //   global_name: 'Zigi',
+  //   avatar_decoration_data: null,
+  //   banner_color: '#ff7bda',
+  //   mfa_enabled: false,
+  //   locale: 'en-US'
+  // }
+  verifyToken(): Observable<any> {
     return this.http
       .get<any>('https://localhost:3000/auth/check_cookie', {
         withCredentials: true,
@@ -34,10 +51,10 @@ export class AuthService {
           console.log('User Data: ', response);
           this.authenticatedUser = response;
           if (response) {
-            return true;
+            return response;
           } else {
             console.log('No response from API');
-            return false;
+            return response;
           }
         }),
         catchError(() => of(false)) // Handle network errors or other errors
