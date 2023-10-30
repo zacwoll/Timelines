@@ -6,17 +6,18 @@ import { finalize, map } from 'rxjs';
 
 export const AuthGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
-  //TODO: Fix understanding why inject WebsocketService fails here.
-  console.log('Now inject the websocket');
-  const websocketService = inject(WebsocketService);
+  const websocketService = inject(WebsocketService); // Instantiates a websocketService instance
 
-  console.log('AuthGuard called');
+  console.log('AuthGuard inspection start');
+  // websocketService.connectService();
   // Call the AuthService to verify the token
   const verificationResult = authService.verifyToken();
 
   return verificationResult.pipe(
     map((authenticated) => {
       if (authenticated) {
+        console.log('Verified as ', authenticated.global_name);
+        websocketService.connectService();
         return true;
       } else {
         // User is not authenticated, redirect to '/landing-page'
